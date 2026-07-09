@@ -24,7 +24,7 @@ const plans = [
   {
     id: 'starter',
     nome: 'Starter',
-    preco: 14,
+    preco: 10,
     creditos_mes: 800,
     stores_max: 2,
     concorrencia: 2,
@@ -36,7 +36,7 @@ const plans = [
   {
     id: 'pro',
     nome: 'Pro',
-    preco: 32,
+    preco: 20,
     creditos_mes: 2500,
     stores_max: 5,
     concorrencia: 5,
@@ -48,7 +48,7 @@ const plans = [
   {
     id: 'business',
     nome: 'Business',
-    preco: 89,
+    preco: 50,
     creditos_mes: 8000,
     stores_max: 20,
     concorrencia: 10,
