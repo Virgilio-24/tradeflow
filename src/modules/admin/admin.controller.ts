@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Body, Param,
+  Controller, Get, Post, Put, Delete, Body, Param,
   Query, Headers, UnauthorizedException, HttpCode,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
@@ -34,6 +34,15 @@ export class AdminController {
   ) {
     this.validateAdmin(token);
     return this.admin.createAccount(body.email, body.nome, body.plano_id);
+  }
+
+  @Delete('accounts/:id')
+  async deleteAccount(
+    @Headers('x-admin-token') token: string,
+    @Param('id') id: string,
+  ) {
+    this.validateAdmin(token);
+    return this.admin.deleteAccount(id);
   }
 
   @Put('accounts/:id/block')
@@ -83,6 +92,25 @@ export class AdminController {
     return this.admin.changePlan(id, body.plano_id);
   }
 
+  @Put('accounts/:id/renew')
+  async renewAccount(
+    @Headers('x-admin-token') token: string,
+    @Param('id') id: string,
+  ) {
+    this.validateAdmin(token);
+    return this.admin.renewAccount(id);
+  }
+
+  @Put('accounts/:id/billing-status')
+  async setBillingStatus(
+    @Headers('x-admin-token') token: string,
+    @Param('id') id: string,
+    @Body() body: { status: string; motivo?: string },
+  ) {
+    this.validateAdmin(token);
+    return this.admin.setBillingStatus(id, body.status as any, body.motivo);
+  }
+
   @Put('accounts/:id/credits/add')
   async addCredits(
     @Headers('x-admin-token') token: string,
@@ -100,6 +128,17 @@ export class AdminController {
   ) {
     this.validateAdmin(token);
     return this.admin.listStores(id);
+  }
+
+  @Post('accounts/:id/stores')
+  @HttpCode(201)
+  async createStore(
+    @Headers('x-admin-token') token: string,
+    @Param('id') id: string,
+    @Body() body: { site_url: string; site_nome: string },
+  ) {
+    this.validateAdmin(token);
+    return this.admin.createStore(id, body.site_url, body.site_nome);
   }
 
   @Get('accounts/:id/jobs')

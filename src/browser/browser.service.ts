@@ -1,6 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { chromium, Browser, BrowserContext, Page } from 'playwright';
+import { Browser, BrowserContext, Page } from 'playwright';
+import { chromium } from 'playwright-extra';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+chromium.use(StealthPlugin());
 
 interface PoolEntry {
   page: Page;
@@ -26,17 +31,23 @@ export class BrowserService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async launch() {
-    this.logger.log('Launching Chromium...');
-    this.browser = await chromium.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-      ],
-    });
+    const headless = process.env.BROWSER_HEADLESS !== 'false';
+    this.logger.log(`Launching browser (headless=${headless})...`);
+
+    const args = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+    ];
+
+    // Tentar Chrome real primeiro — fingerprint mais realista, menos detectável
+    try {
+      this.browser = await chromium.launch({ headless, channel: 'chrome', args });
+      this.logger.log(`Using system Chrome (headless=${headless})`);
+    } catch {
+      this.logger.warn('System Chrome not found, using bundled Chromium');
+      this.browser = await chromium.launch({ headless, args });
+    }
 
     // Contexto com stealth — evita detecção de bot
     this.context = await this.browser.newContext({

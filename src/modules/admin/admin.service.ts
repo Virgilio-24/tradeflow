@@ -27,6 +27,16 @@ export class AdminService {
     const plan = await this.firebase.getPlan(plano_id);
     if (!plan) throw new NotFoundException(`Plan "${plano_id}" not found`);
 
+    // Impede novo trial se já existir conta com este email
+    if (plano_id === 'trial') {
+      const existing = await this.firebase.getAccountByEmail(email);
+      if (existing) {
+        throw new Error(
+          `O email "${email}" já usou o Trial. Escolhe um plano pago para continuar.`,
+        );
+      }
+    }
+
     const licenseKey = 'tf_' + Array.from(
       { length: 32 },
       () => Math.random().toString(36)[2],
@@ -48,6 +58,13 @@ export class AdminService {
     });
 
     return { id, license_key: licenseKey };
+  }
+
+  async deleteAccount(id: string) {
+    const account = await this.firebase.getAccount(id);
+    if (!account) throw new NotFoundException('Account not found');
+    await this.firebase.deleteAccount(id);
+    return { ok: true };
   }
 
   async blockAccount(id: string, motivo?: string) {
@@ -90,6 +107,38 @@ export class AdminService {
     return { ok: true };
   }
 
+  async renewAccount(id: string) {
+    const account = await this.firebase.getAccount(id);
+    if (!account) throw new NotFoundException('Account not found');
+
+    const base = account.renovacao_em
+      ? new Date((account.renovacao_em as any).seconds * 1000)
+      : new Date();
+    if (base < new Date()) base.setTime(Date.now());
+    base.setMonth(base.getMonth() + 1);
+
+    await this.firebase.updateAccount(id, {
+      renovacao_em: admin.firestore.Timestamp.fromDate(base) as any,
+      billing_status: 'active' as BillingStatus,
+    });
+    await this.firebase.createLog({
+      account_id: id,
+      nivel: 'info',
+      mensagem: `Subscrição renovada pelo admin — nova data: ${base.toLocaleDateString('pt-PT')}`,
+    });
+    return { ok: true, renovacao_em: base.toISOString() };
+  }
+
+  async setBillingStatus(id: string, status: BillingStatus, motivo?: string) {
+    await this.firebase.updateAccount(id, { billing_status: status });
+    await this.firebase.createLog({
+      account_id: id,
+      nivel: status === 'suspended' || status === 'cancelled' ? 'warning' : 'info',
+      mensagem: `Billing status alterado para "${status}" pelo admin.${motivo ? ' Motivo: ' + motivo : ''}`,
+    });
+    return { ok: true };
+  }
+
   async addCredits(id: string, amount: number) {
     const account = await this.firebase.getAccount(id);
     if (!account) throw new NotFoundException('Account not found');
@@ -106,6 +155,24 @@ export class AdminService {
 
   async listStores(accountId: string) {
     return this.firebase.listStoresByAccount(accountId);
+  }
+
+  async createStore(accountId: string, siteUrl: string, siteNome: string) {
+    const account = await this.firebase.getAccount(accountId);
+    if (!account) throw new NotFoundException('Account not found');
+    const id = await this.firebase.createStore({
+      account_id: accountId,
+      site_url: siteUrl,
+      site_nome: siteNome,
+      activo: true,
+      rate_limit: 10,
+    } as any);
+    await this.firebase.createLog({
+      account_id: accountId,
+      nivel: 'info',
+      mensagem: `Store criada: ${siteUrl}`,
+    });
+    return { id };
   }
 
   async listJobs(accountId: string) {

@@ -46,6 +46,15 @@ export class FirebaseService implements OnModuleInit {
     return { id: doc.id, ...doc.data() } as Account;
   }
 
+  async getAccountByEmail(email: string): Promise<Account | null> {
+    const snap = await this.db.collection('accounts')
+      .where('email', '==', email)
+      .limit(1)
+      .get();
+    if (snap.empty) return null;
+    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Account;
+  }
+
   async listAccounts(): Promise<Account[]> {
     const snap = await this.db.collection('accounts')
       .orderBy('criado_em', 'desc').get();
@@ -62,6 +71,10 @@ export class FirebaseService implements OnModuleInit {
 
   async updateAccount(id: string, data: Partial<Account>): Promise<void> {
     await this.db.collection('accounts').doc(id).update(data);
+  }
+
+  async deleteAccount(id: string): Promise<void> {
+    await this.db.collection('accounts').doc(id).delete();
   }
 
   async decrementCredits(accountId: string, cost: number): Promise<void> {
@@ -200,9 +213,10 @@ export class FirebaseService implements OnModuleInit {
   }
 
   async completeJob(id: string, resultado: ProductData, durationMs: number): Promise<void> {
+    const clean = JSON.parse(JSON.stringify(resultado, (_, v) => v === undefined ? null : v));
     await this.db.collection('jobs').doc(id).update({
       status: 'done',
-      resultado,
+      resultado: clean,
       duracao_ms: durationMs,
       concluido_em: admin.firestore.FieldValue.serverTimestamp(),
     });

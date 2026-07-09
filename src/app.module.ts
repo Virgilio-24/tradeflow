@@ -5,6 +5,8 @@ import { FirebaseModule } from './firebase/firebase.module';
 import { BrowserModule } from './browser/browser.module';
 import { ScrapeModule } from './modules/scrape/scrape.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { RegistarModule } from './modules/registar/registar.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { AdminModule } from './modules/admin/admin.module';
     BrowserModule,
     ScrapeModule,
     AdminModule,
+    RegistarModule,
+    MailModule,
   ],
 })
 export class AppModule {}

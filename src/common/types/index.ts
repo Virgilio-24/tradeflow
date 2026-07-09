@@ -3,15 +3,15 @@ export type PlanId = 'trial' | 'starter' | 'pro' | 'business';
 export type BillingStatus = 'trial' | 'active' | 'suspended' | 'cancelled';
 export type JobStatus = 'pending' | 'processing' | 'done' | 'error';
 export type LogLevel = 'info' | 'warning' | 'error' | 'blocked';
-export type JobType = 'import' | 'price_sync' | 'stock_sync' | 'translation';
-export type MarketplaceSource = 'shein' | 'temu' | 'aliexpress' | 'zara' | 'hm' | 'shopee';
+export type JobType = 'import';
+export type MarketplaceSource =
+  | 'shein' | 'temu' | 'zara' | 'hm'
+  | 'zalando' | 'amazon' | 'pullandbear' | 'bershka' | 'aboutyou'
+  | 'aliexpress' | 'shopee';
 
 // ── JOB COST ──
 export const JOB_COST: Record<JobType, number> = {
   import: 1,
-  price_sync: 0.2,
-  stock_sync: 0.2,
-  translation: 2,
 };
 
 // ── FIREBASE DOCUMENTS ──
@@ -48,6 +48,8 @@ export interface Plan {
   rate_limit: number;
   fontes: MarketplaceSource[];
   activo: boolean;
+  requer_proxies: boolean;
+  proxy_urls?: string[];
 }
 
 export interface Job {
@@ -98,7 +100,7 @@ export interface ProductVariant {
 
 export interface ProductData {
   nome: string;
-  descricao: string;
+  descricao?: string;
   preco: number;
   preco_original?: number;
   moeda: string;
@@ -110,5 +112,4 @@ export interface ProductData {
   categoria?: string;
   fonte_url: string;
   fonte_site: MarketplaceSource;
-  raw_data?: unknown;
 }

@@ -1,15 +1,20 @@
 import { Controller, Post, Get, Body, Param, UseGuards, Req, HttpCode } from '@nestjs/common';
 import { ScrapeService } from './scrape.service';
 import { LicenseGuard } from '../auth/auth.guard';
-import { IsUrl, IsIn, IsOptional } from 'class-validator';
+import { IsUrl, IsNumber, Min, Max } from 'class-validator';
 
 class ScrapeDto {
   @IsUrl({}, { message: 'Invalid URL' })
   url: string;
+}
 
-  @IsOptional()
-  @IsIn(['import', 'price_sync', 'stock_sync'])
-  tipo?: string;
+class DeductDto {
+  @IsNumber()
+  @Min(0.1)
+  @Max(5)
+  amount: number;
+
+  fonte?: string;
 }
 
 @Controller()
@@ -22,7 +27,7 @@ export class ScrapeController {
   async startScrape(@Body() dto: ScrapeDto, @Req() req: any) {
     const jobId = await this.scrape.createJob(
       dto.url,
-      dto.tipo as any ?? 'import',
+      'import',
       req.account,
       req.store,
     );
@@ -45,5 +50,12 @@ export class ScrapeController {
       plano: req.account.plano_id,
       renovacao_em: req.account.renovacao_em,
     };
+  }
+
+  @Post('usage/deduct')
+  @UseGuards(LicenseGuard)
+  @HttpCode(200)
+  async deductUsage(@Body() dto: DeductDto, @Req() req: any) {
+    return this.scrape.deductCredits(req.account, dto.amount, dto.fonte);
   }
 }

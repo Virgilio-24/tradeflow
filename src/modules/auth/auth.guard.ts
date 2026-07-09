@@ -37,18 +37,18 @@ export class LicenseGuard implements CanActivate {
         nivel: 'warning',
         mensagem: `Invalid license key attempt: ${licenseKey.substring(0, 8)}...`,
       });
-      throw new UnauthorizedException('Invalid or inactive license key');
+      throw new UnauthorizedException('License key inválida ou inactiva.');
     }
 
     // 2. Validar billing status
     if (account.billing_status === 'suspended') {
       throw new HttpException(
-        'Account suspended. Please contact support.',
+        'Conta suspensa. Contacta o suporte.',
         HttpStatus.PAYMENT_REQUIRED,
       );
     }
     if (account.billing_status === 'cancelled') {
-      throw new HttpException('Account cancelled.', HttpStatus.PAYMENT_REQUIRED);
+      throw new HttpException('Conta cancelada.', HttpStatus.PAYMENT_REQUIRED);
     }
 
     // 3. Validar store
@@ -60,7 +60,7 @@ export class LicenseGuard implements CanActivate {
         mensagem: `Unregistered store attempt: ${storeUrl}`,
       });
       throw new ForbiddenException(
-        `Store "${storeUrl}" not registered. Add it in your account.`,
+        `Loja "${storeUrl}" não registada. Adiciona-a na tua conta.`,
       );
     }
 
@@ -78,7 +78,7 @@ export class LicenseGuard implements CanActivate {
       });
       throw new HttpException(
         {
-          error: 'Credits exhausted',
+          error: 'Limite de produtos atingido',
           used: account.creditos_usados,
           limit: account.creditos_limite,
           upgrade: true,

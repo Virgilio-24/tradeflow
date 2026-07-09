@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { FirebaseService } from '../firebase/firebase.service';
 import { BrowserService } from '../browser/browser.service';
 import { ExtractorFactory } from '../extractors/factory/extractor.factory';
+import { ClaudeExtractor } from '../extractors/claude/claude.extractor';
 import { JOB_COST } from '../common/types';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class ImportWorker {
     private firebase: FirebaseService,
     private browser: BrowserService,
     private factory: ExtractorFactory,
+    private claude: ClaudeExtractor,
   ) {}
 
   // Verificar fila a cada 3 segundos
@@ -50,7 +52,7 @@ export class ImportWorker {
 
       if (plan && !plan.fontes.includes(job.fonte)) {
         throw new Error(
-          `Source "${job.fonte}" not available in plan "${plan.nome}". Upgrade to access.`,
+          `A loja "${job.fonte}" não está disponível no plano "${plan.nome}". Faz upgrade para aceder.`,
         );
       }
 
@@ -60,8 +62,25 @@ export class ImportWorker {
       // Delay humano antes de começar
       await this.sleep(500 + Math.random() * 1000);
 
-      // Extrair
-      const resultado = await extractor.extract(job.url, page);
+      const proxyUrls = (plan?.requer_proxies && plan?.proxy_urls?.length)
+        ? plan.proxy_urls
+        : undefined;
+
+      // Tenta sidecar primeiro; se falhar usa Claude como fallback
+      let resultado;
+      try {
+        resultado = await extractor.extract(job.url, page, { proxyUrls });
+      } catch (sidecarErr: any) {
+        this.logger.warn(`Sidecar failed for job ${jobId}: ${sidecarErr?.message} — trying Claude fallback`);
+        await this.firebase.createLog({
+          account_id: job.account_id,
+          store_id: job.store_id,
+          job_id: jobId,
+          nivel: 'warning',
+          mensagem: `Sidecar falhou (${sidecarErr?.message}), a usar Claude como fallback`,
+        });
+        resultado = await this.claude.extract(job.url, page, { proxyUrls });
+      }
 
       const duracao = Date.now() - startedAt;
       await this.firebase.completeJob(jobId, resultado, duracao);

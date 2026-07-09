@@ -16,11 +16,14 @@ export class ScrapeService {
     account: Account,
     store: Store,
   ): Promise<string> {
+    // Normalizar URL (adicionar protocolo se em falta)
+    const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
+
     // Detectar fonte
-    const fonte = this.factory.detectSource(url);
+    const fonte = this.factory.detectSource(normalizedUrl);
     if (!fonte) {
       throw new HttpException(
-        `Marketplace not supported for URL: ${url}`,
+        `Loja não suportada para o URL: ${normalizedUrl}`,
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
@@ -29,7 +32,7 @@ export class ScrapeService {
     const plan = await this.firebase.getPlan(account.plano_id);
     if (plan && !plan.fontes.includes(fonte)) {
       throw new ForbiddenException(
-        `"${fonte}" not available in plan "${plan.nome}". Upgrade to access.`,
+        `A loja "${fonte}" não está disponível no plano "${plan.nome}". Faz upgrade para aceder.`,
       );
     }
 
@@ -45,7 +48,7 @@ export class ScrapeService {
     const jobId = await this.firebase.createJob({
       account_id: account.id,
       store_id: store.id,
-      url,
+      url: normalizedUrl,
       fonte,
       tipo,
       status: 'pending',
@@ -57,10 +60,34 @@ export class ScrapeService {
       store_id: store.id,
       job_id: jobId,
       nivel: 'info',
-      mensagem: `Job created: ${fonte} — ${url}`,
+      mensagem: `Job created: ${fonte} — ${normalizedUrl}`,
     });
 
     return jobId;
+  }
+
+  async deductCredits(account: Account, amount: number, fonte?: string): Promise<object> {
+    const disponivel = account.creditos_limite - account.creditos_usados;
+    if (amount > disponivel) {
+      throw new HttpException(
+        { error: 'Insufficient credits', needed: amount, available: disponivel, upgrade: true },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    await this.firebase.decrementCredits(account.id, amount);
+
+    await this.firebase.createLog({
+      account_id: account.id,
+      nivel: 'info',
+      mensagem: `Deduct ${amount} crédito(s) — scrape direto${fonte ? ` (${fonte})` : ''}`,
+    });
+
+    return {
+      creditos_usados: account.creditos_usados + amount,
+      creditos_limite: account.creditos_limite,
+      deducted: amount,
+    };
   }
 
   async getJob(jobId: string, accountId: string) {

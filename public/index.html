@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeFlow — Importação automática de produtos</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090f;--bg2:#0f1018;--bg3:#14151f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --indigo:#818cf8;--indigo-d:#6366f1;
+  --amber:#fbbf24;--amber-d:#f59e0b;
+  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+  --green:#34d399;--red:#f87171;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(9,9,15,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;letter-spacing:-.02em;color:#fff}
+.logo-icon{width:30px;height:30px;border-radius:8px;background:var(--indigo-d);display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-links a{font-size:13px;color:var(--muted2);padding:6px 12px;border-radius:6px;transition:color .15s,background .15s}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.06)}
+.btn-amber{background:var(--amber);color:#000;font-size:13px;font-weight:700;padding:8px 18px;border-radius:8px;transition:background .15s;white-space:nowrap;display:inline-block}
+.btn-amber:hover{background:var(--amber-d)}
+.btn-outline{border:1px solid var(--border2);color:var(--muted2);font-size:13px;font-weight:600;padding:8px 18px;border-radius:8px;transition:all .15s;display:inline-block}
+.btn-outline:hover{border-color:var(--indigo);color:var(--indigo)}
+
+/* HERO */
+.hero{padding:96px 0 80px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-180px;left:50%;transform:translateX(-50%);width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.12) 0%,transparent 70%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.25);color:var(--indigo);font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:28px;letter-spacing:.04em}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+h1{font-size:clamp(36px,5vw,62px);font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1.1;margin-bottom:20px}
+h1 span{color:var(--amber)}
+.hero-sub{font-size:18px;color:var(--muted2);max-width:540px;margin:0 auto 40px;line-height:1.7}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-hero{background:var(--amber);color:#000;font-size:15px;font-weight:700;padding:13px 28px;border-radius:10px;transition:all .15s;display:inline-block}
+.btn-hero:hover{background:var(--amber-d);transform:translateY(-1px)}
+.btn-hero-outline{border:1px solid var(--border2);color:var(--muted2);font-size:15px;font-weight:600;padding:13px 28px;border-radius:10px;transition:all .15s;display:inline-block}
+.btn-hero-outline:hover{border-color:var(--indigo);color:var(--indigo)}
+.hero-logos{margin-top:60px}
+.hero-logos p{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px}
+.logo-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.logo-pill{background:var(--bg2);border:1px solid var(--border);color:var(--muted2);font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px}
+
+/* STATS */
+.stats{padding:40px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+.stat{background:var(--bg);padding:32px 24px;text-align:center}
+.stat-num{font-size:36px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1}
+.stat-num span{color:var(--amber)}
+.stat-label{font-size:13px;color:var(--muted);margin-top:6px}
+
+/* SECTION SHARED */
+section{padding:80px 0}
+.section-tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--indigo);margin-bottom:12px}
+h2{font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-.03em;color:#fff;margin-bottom:12px}
+.section-sub{font-size:16px;color:var(--muted2);max-width:520px;margin-bottom:48px}
+.section-center{text-align:center}
+.section-center .section-sub{margin-left:auto;margin-right:auto}
+
+/* COMO FUNCIONA */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+.step{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px}
+.step-num{width:40px;height:40px;border-radius:10px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:var(--indigo);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.step h3{font-size:17px;font-weight:700;color:#fff;margin-bottom:8px}
+.step p{font-size:14px;color:var(--muted2);line-height:1.7}
+
+/* FONTES */
+.fontes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-top:48px}
+.fonte-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 16px;text-align:center}
+.fonte-icon{font-size:24px;margin-bottom:8px}
+.fonte-name{font-size:13px;font-weight:600;color:#fff}
+.fonte-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:4px;display:inline-block}
+.badge-starter{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:var(--green)}
+.badge-pro{background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.2);color:var(--indigo)}
+.badge-business{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);color:var(--amber)}
+
+/* PREÇOS */
+.plans-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px}
+.plan{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px;position:relative;transition:border-color .2s}
+.plan:hover{border-color:var(--border2)}
+.plan.popular{border-color:var(--indigo);background:linear-gradient(135deg,rgba(99,102,241,.08) 0%,var(--bg2) 100%)}
+.plan-popular-tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--indigo-d);color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;white-space:nowrap;letter-spacing:.04em}
+.plan-name{font-size:13px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.plan-price{margin-bottom:4px}
+.plan-price .eur{font-size:36px;font-weight:800;color:#fff;letter-spacing:-.03em}
+.plan-price .mes{font-size:14px;color:var(--muted);font-weight:400}
+.plan-produtos{font-size:13px;color:var(--muted2);margin-bottom:20px}
+.plan-produtos strong{color:var(--amber)}
+.plan-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.plan-features li{font-size:13px;color:var(--muted2);display:flex;align-items:center;gap:8px}
+.plan-features li::before{content:'✓';color:var(--green);font-weight:700;font-size:12px;flex-shrink:0}
+.plan-features li.muted::before{content:'—';color:var(--muted)}
+.plan-cta{width:100%;padding:11px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;border:none;text-decoration:none;display:block;text-align:center}
+.plan-cta-primary{background:var(--indigo-d);color:#fff}
+.plan-cta-primary:hover{background:var(--indigo);transform:translateY(-1px)}
+.plan-cta-amber{background:var(--amber);color:#000}
+.plan-cta-amber:hover{background:var(--amber-d);transform:translateY(-1px)}
+.plan-cta-outline{background:transparent;border:1px solid var(--border2)!important;color:var(--muted2)}
+.plan-cta-outline:hover{border-color:var(--indigo)!important;color:var(--indigo)}
+.site-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.site-pill{font-size:10px;font-weight:600;background:var(--bg3);border:1px solid var(--border);color:var(--muted2);padding:2px 8px;border-radius:10px}
+
+/* API PREVIEW */
+.api-preview{background:var(--bg2);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+.api-tabs{display:flex;border-bottom:1px solid var(--border)}
+.api-tab{padding:12px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.api-tab.active{color:#fff;border-bottom-color:var(--indigo)}
+.api-body{padding:28px;font-family:monospace;font-size:13px;line-height:1.8;overflow-x:auto}
+.c-method{color:var(--indigo)}.c-url{color:#fff}.c-key{color:#93c5fd}.c-str{color:#86efac}.c-val{color:var(--amber)}.c-muted{color:var(--muted)}
+
+/* CTA FINAL */
+.cta-section{background:linear-gradient(135deg,rgba(99,102,241,.15) 0%,rgba(251,191,36,.08) 100%);border:1px solid rgba(99,102,241,.2);border-radius:24px;padding:64px;text-align:center;margin:0 0 80px}
+.cta-section h2{margin-bottom:12px}
+.cta-section p{color:var(--muted2);margin-bottom:32px}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:40px 0}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:13px;color:var(--muted);transition:color .15s}
+.footer-links a:hover{color:#fff}
+
+@media(max-width:900px){
+  .plans-grid{grid-template-columns:repeat(2,1fr)}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .steps{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .plans-grid{grid-template-columns:1fr}
+  .nav-links{display:none}
+  .cta-section{padding:40px 24px}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-icon">⚡</div>
+        TradeFlow
+      </a>
+      <div class="nav-links">
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#fontes">Fontes</a>
+        <a href="#precos">Preços</a>
+        <a href="#api">API</a>
+      </div>
+      <a href="/registar" class="btn-amber">Começar grátis</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="badge"><span class="badge-dot"></span> API em produção · Moçambique & Europa</div>
+    <h1>Importa produtos de<br><span>qualquer loja</span> em segundos</h1>
+    <p class="hero-sub">Liga o teu e-commerce ao TradeFlow e importa produtos da Shein, Zara, Amazon e mais — com nome, preço, imagens e variantes, automaticamente.</p>
+    <div class="hero-btns">
+      <a href="/registar" class="btn-hero">Começar gratuitamente →</a>
+      <a href="#api" class="btn-hero-outline">Ver a API</a>
+    </div>
+    <div class="hero-logos">
+      <p>Compatível com</p>
+      <div class="logo-pills">
+        <span class="logo-pill">Shein</span>
+        <span class="logo-pill">Temu</span>
+        <span class="logo-pill">Zara</span>
+        <span class="logo-pill">H&M</span>
+        <span class="logo-pill">Amazon</span>
+        <span class="logo-pill">About You</span>
+        <span class="logo-pill">AliExpress</span>
+        <span class="logo-pill">Bershka</span>
+        <span class="logo-pill">Pull&Bear</span>
+        <span class="logo-pill">Zalando</span>
+        <span class="logo-pill">Shopee</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-num">11<span>+</span></div><div class="stat-label">Lojas suportadas</div></div>
+      <div class="stat"><div class="stat-num"><span>~</span>3s</div><div class="stat-label">Por produto importado</div></div>
+      <div class="stat"><div class="stat-num">99<span>%</span></div><div class="stat-label">Dados extraídos correctamente</div></div>
+      <div class="stat"><div class="stat-num">0<span>€</span></div><div class="stat-label">Para começar — Trial gratuito</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- COMO FUNCIONA -->
+<section id="como-funciona">
+  <div class="container">
+    <div class="section-center">
+      <p class="section-tag">Como funciona</p>
+      <h2>Três passos para importar</h2>
+      <p class="section-sub">Do URL do produto ao teu catálogo, tudo automático.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Cria a tua conta</h3>
+        <p>Escolhe um plano, introduz o email e o domínio da tua loja. Recebes uma license key de imediato.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Envia o URL do produto</h3>
+        <p>Faz um <code style="color:var(--indigo);background:rgba(99,102,241,.1);padding:1px 6px;border-radius:4px">POST /scrape</code> com o URL da Shein, Zara ou outra loja suportada. Tens um job ID de volta em milissegundos.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Recebe os dados estruturados</h3>
+        <p>Nome, preço, imagens, tamanhos, cores e stock — tudo em JSON, pronto a inserir no teu catálogo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FONTES -->
+<section id="fontes" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <div class="section-center">
+      <p class="section-tag">Lojas suportadas</p>
+      <h2>11 fontes disponíveis</h2>
+      <p class="section-sub">Cada plano dá acesso a um conjunto de lojas. Upgrade a qualquer momento.</p>
+    </div>
+    <div class="fontes-grid">
+      <div class="fonte-card"><div class="fonte-icon">🛍️</div><div class="fonte-name">Shein</div><span class="fonte-badge badge-starter">Trial+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">📦</div><div class="fonte-name">Temu</div><span class="fonte-badge badge-starter">Trial+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">👗</div><div class="fonte-name">Zara</div><span class="fonte-badge badge-starter">Trial+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">🌿</div><div class="fonte-name">H&M</div><span class="fonte-badge badge-starter">Starter+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">📬</div><div class="fonte-name">Amazon</div><span class="fonte-badge badge-starter">Starter+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">💜</div><div class="fonte-name">About You</div><span class="fonte-badge badge-starter">Starter+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">🚀</div><div class="fonte-name">AliExpress</div><span class="fonte-badge badge-pro">Pro+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">🔴</div><div class="fonte-name">Bershka</div><span class="fonte-badge badge-pro">Pro+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">🐻</div><div class="fonte-name">Pull&Bear</div><span class="fonte-badge badge-pro">Pro+</span></div>
+      <div class="fonte-card"><div class="fonte-icon">👠</div><div class="fonte-name">Zalando</div><span class="fonte-badge badge-business">Business</span></div>
+      <div class="fonte-card"><div class="fonte-icon">🛒</div><div class="fonte-name">Shopee</div><span class="fonte-badge badge-business">Business</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PREÇOS -->
+<section id="precos">
+  <div class="container">
+    <div class="section-center">
+      <p class="section-tag">Preços</p>
+      <h2>Simples e transparente</h2>
+      <p class="section-sub">1 importação = 1 produto. Sem surpresas no final do mês.</p>
+    </div>
+    <div class="plans-grid">
+
+      <!-- TRIAL -->
+      <div class="plan">
+        <div class="plan-name">Trial</div>
+        <div class="plan-price"><span class="eur">0€</span><span class="mes">/mês</span></div>
+        <div class="plan-produtos"><strong>20 produtos</strong>/mês</div>
+        <div class="site-pills">
+          <span class="site-pill">shein</span><span class="site-pill">temu</span><span class="site-pill">zara</span>
+        </div>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li>1 loja</li>
+          <li>Extracção básica</li>
+          <li>JSON estruturado</li>
+          <li class="muted">Suporte prioritário</li>
+          <li class="muted">Renovação automática</li>
+        </ul>
+        <a href="/registar?plano=trial" class="plan-cta plan-cta-outline">Começar grátis</a>
+      </div>
+
+      <!-- STARTER -->
+      <div class="plan">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price"><span class="eur">12€</span><span class="mes">/mês</span></div>
+        <div class="plan-produtos"><strong>800 produtos</strong>/mês</div>
+        <div class="site-pills">
+          <span class="site-pill">shein</span><span class="site-pill">temu</span><span class="site-pill">zara</span><span class="site-pill">h&m</span><span class="site-pill">amazon</span><span class="site-pill">aboutyou</span>
+        </div>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li>2 lojas</li>
+          <li>Extracção completa</li>
+          <li>JSON estruturado</li>
+          <li>Suporte por email</li>
+          <li class="muted">Renovação automática</li>
+        </ul>
+        <a href="/registar?plano=starter" class="plan-cta plan-cta-primary">Começar agora</a>
+      </div>
+
+      <!-- PRO -->
+      <div class="plan popular">
+        <div class="plan-popular-tag">Mais popular</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price"><span class="eur">29€</span><span class="mes">/mês</span></div>
+        <div class="plan-produtos"><strong>2 500 produtos</strong>/mês</div>
+        <div class="site-pills">
+          <span class="site-pill">shein</span><span class="site-pill">temu</span><span class="site-pill">zara</span><span class="site-pill">h&m</span><span class="site-pill">amazon</span><span class="site-pill">aliexpress</span><span class="site-pill">aboutyou</span><span class="site-pill">bershka</span><span class="site-pill">p&b</span>
+        </div>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li>5 lojas</li>
+          <li>Extracção completa</li>
+          <li>JSON estruturado</li>
+          <li>Suporte prioritário</li>
+          <li>Concorrência x5</li>
+        </ul>
+        <a href="/registar?plano=pro" class="plan-cta plan-cta-amber">Começar agora</a>
+      </div>
+
+      <!-- BUSINESS -->
+      <div class="plan">
+        <div class="plan-name">Business</div>
+        <div class="plan-price"><span class="eur">89€</span><span class="mes">/mês</span></div>
+        <div class="plan-produtos"><strong>8 000 produtos</strong>/mês</div>
+        <div class="site-pills">
+          <span class="site-pill">todas as 11 fontes</span>
+        </div>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li>20 lojas</li>
+          <li>Extracção completa</li>
+          <li>JSON estruturado</li>
+          <li>Suporte dedicado</li>
+          <li>Concorrência x10</li>
+        </ul>
+        <a href="/registar?plano=business" class="plan-cta plan-cta-primary">Contactar</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- API -->
+<section id="api" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center">
+      <div>
+        <p class="section-tag">API REST</p>
+        <h2>Integra em minutos</h2>
+        <p class="section-sub" style="margin-bottom:24px">Dois headers, um POST, e tens o produto. Funciona com qualquer linguagem ou framework.</p>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:12px">
+          <li style="display:flex;gap:12px;align-items:flex-start">
+            <span style="color:var(--green);font-weight:700;margin-top:2px">✓</span>
+            <span style="font-size:14px;color:var(--muted2)">Resposta assíncrona via job ID — sem timeouts</span>
+          </li>
+          <li style="display:flex;gap:12px;align-items:flex-start">
+            <span style="color:var(--green);font-weight:700;margin-top:2px">✓</span>
+            <span style="font-size:14px;color:var(--muted2)">Retorna nome, preço, imagens, tamanhos e stock</span>
+          </li>
+          <li style="display:flex;gap:12px;align-items:flex-start">
+            <span style="color:var(--green);font-weight:700;margin-top:2px">✓</span>
+            <span style="font-size:14px;color:var(--muted2)">Endpoint <code style="color:var(--indigo);background:rgba(99,102,241,.1);padding:1px 6px;border-radius:4px">/usage</code> para controlar o consumo</span>
+          </li>
+          <li style="display:flex;gap:12px;align-items:flex-start">
+            <span style="color:var(--green);font-weight:700;margin-top:2px">✓</span>
+            <span style="font-size:14px;color:var(--muted2)">Erros claros: 401, 402, 403, 429, 422</span>
+          </li>
+        </ul>
+        <div style="margin-top:32px">
+          <a href="#docs" class="btn-amber" style="font-size:14px;padding:10px 20px">Ver documentação completa →</a>
+        </div>
+      </div>
+      <div class="api-preview">
+        <div class="api-tabs">
+          <div class="api-tab active">Importar produto</div>
+        </div>
+        <div class="api-body">
+<span class="c-muted"># Headers de autenticação</span><br>
+<span class="c-key">x-license-key</span>: <span class="c-str">tf_xxxxxxxxxxxx</span><br>
+<span class="c-key">x-store-url</span>: <span class="c-str">minha-loja.com</span><br>
+<br>
+<span class="c-muted"># POST /scrape</span><br>
+{<br>
+&nbsp;&nbsp;<span class="c-key">"url"</span>: <span class="c-str">"https://shein.com/item/..."</span><br>
+}<br>
+<br>
+<span class="c-muted"># Resposta → job_id</span><br>
+{ <span class="c-key">"job_id"</span>: <span class="c-str">"abc123"</span> }<br>
+<br>
+<span class="c-muted"># GET /job/abc123 → produto</span><br>
+{<br>
+&nbsp;&nbsp;<span class="c-key">"nome"</span>: <span class="c-str">"Vestido floral M"</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"preco"</span>: <span class="c-val">12.99</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"imagens"</span>: [<span class="c-str">"..."</span>]<br>
+}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOCS -->
+<section id="docs">
+  <div class="container">
+    <div class="section-center">
+      <p class="section-tag">Documentação</p>
+      <h2>API Reference</h2>
+      <p class="section-sub">Tudo o que precisas para integrar o TradeFlow em minutos.</p>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <span style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:var(--amber);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:.06em">AUTENTICAÇÃO</span>
+        <h3 style="font-size:16px;font-weight:600;color:#fff">Headers obrigatórios em todos os pedidos</h3>
+      </div>
+      <div style="display:grid;gap:10px">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;gap:16px;align-items:flex-start">
+          <code style="color:var(--amber);font-size:12px;min-width:140px;font-family:monospace">x-license-key</code>
+          <span style="font-size:13px;color:var(--muted2)">A tua chave de API — disponível no painel após criar conta</span>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;gap:16px;align-items:flex-start">
+          <code style="color:var(--amber);font-size:12px;min-width:140px;font-family:monospace">x-store-url</code>
+          <span style="font-size:13px;color:var(--muted2)">O domínio da tua loja (ex: <code style="color:var(--muted2);background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px">minha-loja.com</code>)</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <span style="background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.3);color:var(--green);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;font-family:monospace">POST</span>
+          <code style="font-size:14px;color:#fff;font-family:monospace">/scrape</code>
+          <span style="font-size:13px;color:var(--muted2);margin-left:4px">— Iniciar importação de produto</span>
+        </div>
+        <div style="padding:24px 28px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <p style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Pedido</p>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:monospace;font-size:12px;line-height:1.8">
+              <span class="c-muted">// Body JSON</span><br>
+              {<br>
+              &nbsp;&nbsp;<span class="c-key">"url"</span>: <span class="c-str">"https://shein.com/..."</span><br>
+              }
+            </div>
+          </div>
+          <div>
+            <p style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Resposta <span style="color:var(--green);font-weight:400">202</span></p>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:monospace;font-size:12px;line-height:1.8">
+              {<br>
+              &nbsp;&nbsp;<span class="c-key">"job_id"</span>: <span class="c-str">"abc123"</span>,<br>
+              &nbsp;&nbsp;<span class="c-key">"status"</span>: <span class="c-str">"pending"</span><br>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <span style="background:rgba(129,140,248,.15);border:1px solid rgba(129,140,248,.3);color:var(--indigo);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;font-family:monospace">GET</span>
+          <code style="font-size:14px;color:#fff;font-family:monospace">/job/:id</code>
+          <span style="font-size:13px;color:var(--muted2);margin-left:4px">— Resultado do job</span>
+        </div>
+        <div style="padding:24px 28px">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:monospace;font-size:12px;line-height:1.8;overflow-x:auto">
+            {<br>
+            &nbsp;&nbsp;<span class="c-key">"status"</span>: <span class="c-str">"done"</span>,<br>
+            &nbsp;&nbsp;<span class="c-key">"resultado"</span>: {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="c-key">"nome"</span>: <span class="c-str">"Vestido floral manga comprida"</span>,<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="c-key">"preco"</span>: <span class="c-val">12.99</span>,<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="c-key">"moeda"</span>: <span class="c-str">"EUR"</span>,<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="c-key">"imagens"</span>: [<span class="c-str">"https://cdn.shein.com/..."</span>],<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="c-key">"tamanhos"</span>: [<span class="c-str">"XS"</span>,<span class="c-str">"S"</span>,<span class="c-str">"M"</span>,<span class="c-str">"L"</span>]<br>
+            &nbsp;&nbsp;}<br>
+            }
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center"><code style="font-size:11px;color:var(--amber)">pending</code><p style="font-size:11px;color:var(--muted);margin-top:3px">Na fila</p></div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center"><code style="font-size:11px;color:var(--indigo)">processing</code><p style="font-size:11px;color:var(--muted);margin-top:3px">A extrair</p></div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center"><code style="font-size:11px;color:var(--green)">done</code><p style="font-size:11px;color:var(--muted);margin-top:3px">Pronto</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+          <span style="background:rgba(129,140,248,.15);border:1px solid rgba(129,140,248,.3);color:var(--indigo);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;font-family:monospace">GET</span>
+          <code style="font-size:14px;color:#fff;font-family:monospace">/usage</code>
+          <span style="font-size:13px;color:var(--muted2);margin-left:4px">— Consumo do plano</span>
+        </div>
+        <div style="padding:24px 28px">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:monospace;font-size:12px;line-height:1.8">
+            {<br>
+            &nbsp;&nbsp;<span class="c-key">"creditos_usados"</span>: <span class="c-val">142</span>,<br>
+            &nbsp;&nbsp;<span class="c-key">"creditos_limite"</span>: <span class="c-val">800</span>,<br>
+            &nbsp;&nbsp;<span class="c-key">"plano"</span>: <span class="c-str">"starter"</span>,<br>
+            &nbsp;&nbsp;<span class="c-key">"renovacao_em"</span>: <span class="c-str">"2026-07-28T00:00:00Z"</span><br>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px">
+        <h3 style="font-size:15px;font-weight:600;color:#fff;margin-bottom:16px">Códigos de erro</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:start;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px"><code style="color:var(--red);font-size:12px;font-weight:700">401</code><span style="font-size:13px;color:var(--muted2)">License key inválida ou em falta</span></div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:start;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px"><code style="color:var(--red);font-size:12px;font-weight:700">402</code><span style="font-size:13px;color:var(--muted2)">Conta suspensa ou cancelada</span></div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:start;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px"><code style="color:var(--red);font-size:12px;font-weight:700">403</code><span style="font-size:13px;color:var(--muted2)">Fonte não disponível no teu plano</span></div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:start;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px"><code style="color:var(--red);font-size:12px;font-weight:700">429</code><span style="font-size:13px;color:var(--muted2)">Limite mensal atingido — aguarda renovação ou faz upgrade</span></div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:start;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px"><code style="color:var(--red);font-size:12px;font-weight:700">422</code><span style="font-size:13px;color:var(--muted2)">URL não suportada ou marketplace não disponível</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section>
+  <div class="container">
+    <div class="cta-section">
+      <p class="section-tag" style="justify-content:center;display:flex">Começa hoje</p>
+      <h2>Pronto para automatizar as tuas importações?</h2>
+      <p>Trial gratuito, sem cartão de crédito. 20 produtos para experimentar.</p>
+      <a href="/registar" class="btn-hero">Criar conta grátis →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        TradeFlow
+      </div>
+      <div class="footer-links">
+        <a href="#docs">Docs</a>
+        <a href="#precos">Preços</a>
+        <a href="/registar">Criar conta</a>
+      </div>
+      <p style="font-size:12px;color:var(--muted)">© 2026 TradeFlow · Feito para e-commerce</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
