@@ -68,19 +68,20 @@ export class LicenseGuard implements CanActivate {
       throw new ForbiddenException('Store is deactivated.');
     }
 
-    // 4. Verificar créditos
-    if (account.creditos_usados >= account.creditos_limite) {
+    // 4. Verificar créditos (plano + avulso)
+    const limiteTotal = account.creditos_limite + (account.creditos_extra ?? 0);
+    if (account.creditos_usados >= limiteTotal) {
       await this.firebase.createLog({
         account_id: account.id,
         store_id: store.id,
         nivel: 'blocked',
-        mensagem: `Credits exhausted: ${account.creditos_usados}/${account.creditos_limite}`,
+        mensagem: `Credits exhausted: ${account.creditos_usados}/${limiteTotal}`,
       });
       throw new HttpException(
         {
           error: 'Limite de produtos atingido',
           used: account.creditos_usados,
-          limit: account.creditos_limite,
+          limit: limiteTotal,
           upgrade: true,
         },
         HttpStatus.TOO_MANY_REQUESTS,

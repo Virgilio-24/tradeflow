@@ -20,6 +20,8 @@ const plans = [
     fontes: ['shein', 'temu', 'zara'],
     activo: true,
     requer_proxies: false,
+    whatsapp_incluido: true,
+    whatsapp_numeros_max: 1,        // modo teste: só 1 número
   },
   {
     id: 'starter',

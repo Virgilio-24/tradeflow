@@ -7,6 +7,7 @@ import { ScrapeModule } from './modules/scrape/scrape.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { RegistarModule } from './modules/registar/registar.module';
 import { MailModule } from './mail/mail.module';
+import { StripeModule } from './modules/stripe/stripe.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MailModule } from './mail/mail.module';
     AdminModule,
     RegistarModule,
     MailModule,
+    StripeModule,
   ],
 })
 export class AppModule {}

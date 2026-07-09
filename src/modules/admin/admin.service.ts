@@ -45,6 +45,7 @@ export class AdminService {
     const renovacao = new Date();
     renovacao.setMonth(renovacao.getMonth() + 1);
 
+    const isTrial = plano_id === 'trial';
     const id = await this.firebase.createAccount({
       license_key: licenseKey,
       email,
@@ -53,6 +54,10 @@ export class AdminService {
       billing_status: 'trial',
       creditos_usados: 0,
       creditos_limite: plan.creditos_mes,
+      creditos_extra: 0,
+      whatsapp_ativo: isTrial,           // trial tem WhatsApp em modo teste
+      whatsapp_numeros_max: isTrial ? (plan as any).whatsapp_numeros_max ?? 1 : -1,
+      whatsapp_numeros_registados: [],
       renovacao_em: admin.firestore.Timestamp.fromDate(renovacao) as any,
       criado_em: admin.firestore.Timestamp.now() as any,
     });

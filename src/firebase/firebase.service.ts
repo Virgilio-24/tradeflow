@@ -83,6 +83,43 @@ export class FirebaseService implements OnModuleInit {
     });
   }
 
+  async addCreditsExtra(accountId: string, amount: number): Promise<void> {
+    await this.db.collection('accounts').doc(accountId).update({
+      creditos_extra: admin.firestore.FieldValue.increment(amount),
+    });
+  }
+
+  async activateWhatsapp(accountId: string, opts: {
+    renovacao?: admin.firestore.Timestamp;
+    numeros_max?: number;
+  } = {}): Promise<void> {
+    await this.db.collection('accounts').doc(accountId).update({
+      whatsapp_ativo: true,
+      ...(opts.renovacao && { whatsapp_renovacao: opts.renovacao }),
+      ...(opts.numeros_max !== undefined && { whatsapp_numeros_max: opts.numeros_max }),
+    });
+  }
+
+  async deactivateWhatsapp(accountId: string): Promise<void> {
+    await this.db.collection('accounts').doc(accountId).update({
+      whatsapp_ativo: false,
+      whatsapp_renovacao: admin.firestore.FieldValue.delete(),
+    });
+  }
+
+  async registarNumeroWhatsapp(accountId: string, numero: string): Promise<boolean> {
+    const account = await this.getAccount(accountId);
+    if (!account) return false;
+    const registados = account.whatsapp_numeros_registados ?? [];
+    const max = account.whatsapp_numeros_max ?? -1;
+    if (registados.includes(numero)) return true;
+    if (max !== -1 && registados.length >= max) return false;
+    await this.db.collection('accounts').doc(accountId).update({
+      whatsapp_numeros_registados: admin.firestore.FieldValue.arrayUnion(numero),
+    });
+    return true;
+  }
+
   async resetCredits(accountId: string, feito_por: string): Promise<void> {
     await this.db.collection('accounts').doc(accountId).update({
       creditos_usados: 0,

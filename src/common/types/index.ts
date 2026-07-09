@@ -24,6 +24,13 @@ export interface Account {
   billing_status: BillingStatus;
   creditos_usados: number;
   creditos_limite: number;
+  creditos_extra: number;           // créditos avulso — nunca expiram
+  whatsapp_ativo: boolean;          // true se plano mensal, wa add-on, ou trial
+  whatsapp_numeros_max: number;     // 1 no trial, -1 = ilimitado
+  whatsapp_numeros_registados: string[]; // números já usados (trial: max 1)
+  whatsapp_renovacao?: FirebaseFirestore.Timestamp; // data de renovação do add-on WA
+  stripe_customer_id?: string;      // customer id no Stripe
+  stripe_subscription_id?: string;  // subscription id (planos mensais)
   renovacao_em: FirebaseFirestore.Timestamp;
   criado_em: FirebaseFirestore.Timestamp;
 }
