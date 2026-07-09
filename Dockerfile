@@ -16,5 +16,5 @@ RUN npm ci --only=production
 COPY . .
 RUN npm run build
 
-EXPOSE 3003
+EXPOSE 3004
 CMD ["node", "dist/main.js"]
