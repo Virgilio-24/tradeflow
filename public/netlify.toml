@@ -1,0 +1,10 @@
+[[redirects]]
+  from = "/plans"
+  to = "https://lavi-system-product-name.taild88dae.ts.net/tradeflow/plans"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
