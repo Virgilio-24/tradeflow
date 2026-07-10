@@ -24,9 +24,7 @@ export class StripeService {
     private config: ConfigService,
     private firebase: FirebaseService,
   ) {
-    this.stripe = new Stripe(this.config.get<string>('STRIPE_SECRET_KEY')!, {
-      apiVersion: '2024-06-20',
-    });
+    this.stripe = new Stripe(this.config.get<string>('STRIPE_SECRET_KEY')!);
 
     this.priceMap = {
       [this.config.get('STRIPE_PRICE_STARTER')!]: {
@@ -131,13 +129,12 @@ export class StripeService {
 
   // Renovação mensal de subscrição
   private async onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
-    if (!invoice.subscription) return;
+    const subscriptionId = (invoice as any).subscription as string | null;
+    if (!subscriptionId) return;
 
-    const subscription = await this.stripe.subscriptions.retrieve(
-      invoice.subscription as string,
-    );
+    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
     const priceId = subscription.items.data[0]?.price.id;
-    const accountId = subscription.metadata?.account_id
+    const accountId = (subscription.metadata?.account_id as string | undefined)
       ?? (await this.getAccountByCustomer(subscription.customer as string));
 
     if (!accountId || !priceId) return;
@@ -147,7 +144,8 @@ export class StripeService {
 
     this.logger.log(`Invoice paid — account: ${accountId}, plano: ${cfg.plano_id}, créditos: ${cfg.creditos}`);
 
-    // Reset mensal: zera usados, define limite, activa WhatsApp
+    const periodEnd = (subscription as any).current_period_end as number;
+
     await this.firebase.updateAccount(accountId, {
       plano_id: cfg.plano_id as any,
       billing_status: 'active',
@@ -157,9 +155,7 @@ export class StripeService {
       whatsapp_numeros_max: cfg.whatsapp_numeros_max,
       stripe_subscription_id: subscription.id,
       stripe_customer_id: subscription.customer as string,
-      renovacao_em: admin.firestore.Timestamp.fromMillis(
-        subscription.current_period_end * 1000,
-      ),
+      renovacao_em: admin.firestore.Timestamp.fromMillis(periodEnd * 1000),
     });
   }
 
