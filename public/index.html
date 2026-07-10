@@ -340,164 +340,21 @@ footer{border-top:1px solid var(--border);padding:40px 0}
         <button onclick="showTab('avulso')" id="tab-avulso" style="background:transparent;color:var(--muted2);border:none;cursor:pointer;font-size:13px;font-weight:600;padding:8px 22px;border-radius:7px;transition:all .2s">Créditos avulso</button>
       </div>
     </div>
+    <div id="plans-loading" style="text-align:center;padding:48px 0;color:var(--muted2)">A carregar planos…</div>
 
     <!-- PLANOS MENSAIS -->
-    <div id="tab-content-mensal">
-      <div class="plans-grid">
-
-        <!-- TRIAL -->
-        <div class="plan">
-          <div class="plan-name">Trial</div>
-          <div class="plan-price"><span class="eur">0€</span><span class="mes">/mês</span></div>
-          <div class="plan-produtos"><strong>20 créditos</strong>/mês</div>
-          <div class="site-pills">
-            <span class="site-pill">shein</span><span class="site-pill">temu</span><span class="site-pill">zara</span>
-          </div>
-          <hr class="plan-divider">
-          <ul class="plan-features">
-            <li>1 loja</li>
-            <li>Extracção básica</li>
-            <li>JSON estruturado</li>
-            <li>📱 WhatsApp Notify <span style="font-size:11px;color:var(--muted)">(1 nº · teste)</span></li>
-            <li class="muted">Suporte prioritário</li>
-          </ul>
-          <a href="/registar?plano=trial" class="plan-cta plan-cta-outline">Começar grátis</a>
-        </div>
-
-        <!-- STARTER -->
-        <div class="plan">
-          <div class="plan-name">Starter</div>
-          <div class="plan-price"><span class="eur">10€</span><span class="mes">/mês</span></div>
-          <div class="plan-produtos"><strong>800 créditos</strong>/mês</div>
-          <div class="site-pills">
-            <span class="site-pill">shein</span><span class="site-pill">temu</span><span class="site-pill">zara</span><span class="site-pill">h&m</span><span class="site-pill">amazon</span><span class="site-pill">aboutyou</span>
-          </div>
-          <hr class="plan-divider">
-          <ul class="plan-features">
-            <li>2 lojas</li>
-            <li>Extracção completa</li>
-            <li>JSON estruturado</li>
-            <li>Suporte por email</li>
-            <li>📱 WhatsApp Notify incluído</li>
-          </ul>
-          <a href="/registar?plano=starter" class="plan-cta plan-cta-primary">Começar agora</a>
-        </div>
-
-        <!-- PRO -->
-        <div class="plan popular">
-          <div class="plan-popular-tag">Mais popular</div>
-          <div class="plan-name">Pro</div>
-          <div class="plan-price"><span class="eur">20€</span><span class="mes">/mês</span></div>
-          <div class="plan-produtos"><strong>2 500 créditos</strong>/mês</div>
-          <div class="site-pills">
-            <span class="site-pill">shein</span><span class="site-pill">temu</span><span class="site-pill">zara</span><span class="site-pill">h&m</span><span class="site-pill">amazon</span><span class="site-pill">aliexpress</span><span class="site-pill">aboutyou</span><span class="site-pill">bershka</span><span class="site-pill">p&b</span>
-          </div>
-          <hr class="plan-divider">
-          <ul class="plan-features">
-            <li>5 lojas</li>
-            <li>Extracção completa</li>
-            <li>JSON estruturado</li>
-            <li>Suporte prioritário</li>
-            <li>📱 WhatsApp Notify incluído</li>
-            <li>Concorrência x5</li>
-          </ul>
-          <a href="/registar?plano=pro" class="plan-cta plan-cta-amber">Começar agora</a>
-        </div>
-
-        <!-- BUSINESS -->
-        <div class="plan">
-          <div class="plan-name">Business</div>
-          <div class="plan-price"><span class="eur">50€</span><span class="mes">/mês</span></div>
-          <div class="plan-produtos"><strong>8 000 créditos</strong>/mês</div>
-          <div class="site-pills">
-            <span class="site-pill">todas as 11 fontes</span>
-          </div>
-          <hr class="plan-divider">
-          <ul class="plan-features">
-            <li>20 lojas</li>
-            <li>Extracção completa</li>
-            <li>JSON estruturado</li>
-            <li>📱 WhatsApp Notify incluído</li>
-            <li>Suporte dedicado</li>
-            <li>Concorrência x10</li>
-          </ul>
-          <a href="/registar?plano=business" class="plan-cta plan-cta-primary">Contactar</a>
-        </div>
-
-      </div>
-
-      <!-- WHATSAPP ADD-ON -->
-      <div style="margin-top:24px;background:var(--bg3);border:1px solid rgba(37,211,102,.2);border-radius:14px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;max-width:700px;margin-left:auto;margin-right:auto">
-        <div style="display:flex;align-items:center;gap:14px">
-          <div style="width:44px;height:44px;background:rgba(37,211,102,.12);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px">📱</div>
-          <div>
-            <div style="font-weight:700;color:#fff;font-size:15px">WhatsApp Notify — Add-on</div>
-            <div style="font-size:13px;color:var(--muted2);margin-top:2px">Adiciona o WhatsApp Notify a qualquer plano sem subscrição mensal</div>
-          </div>
-        </div>
-        <div style="text-align:right;white-space:nowrap">
-          <div style="font-size:22px;font-weight:800;color:#25d366">3,5€<span style="font-size:14px;font-weight:500;color:var(--muted2)">/mês</span></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Números ilimitados</div>
-        </div>
-      </div>
-    </div>
+    <div id="tab-content-mensal" style="display:none"></div>
 
     <!-- CRÉDITOS AVULSO -->
-    <div id="tab-content-avulso" style="display:none">
-      <p style="text-align:center;color:var(--muted2);font-size:14px;margin-bottom:32px">Compra créditos sem subscrição. Não expiram. Sem WhatsApp incluído.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;max-width:750px;margin:0 auto">
-
-        <!-- PACK S -->
-        <div class="plan" style="text-align:center">
-          <div class="plan-name">Pack S</div>
-          <div class="plan-price"><span class="eur">6€</span></div>
-          <div class="plan-produtos"><strong>400 créditos</strong></div>
-          <hr class="plan-divider">
-          <ul class="plan-features" style="text-align:left">
-            <li>Não expiram</li>
-            <li>Acumulam com o plano</li>
-            <li style="color:var(--muted)">Sem WhatsApp</li>
-          </ul>
-          <a href="/registar?pack=s" class="plan-cta plan-cta-outline">Comprar</a>
-        </div>
-
-        <!-- PACK M -->
-        <div class="plan popular" style="text-align:center">
-          <div class="plan-popular-tag">Melhor valor</div>
-          <div class="plan-name">Pack M</div>
-          <div class="plan-price"><span class="eur">12€</span></div>
-          <div class="plan-produtos"><strong>1 200 créditos</strong></div>
-          <hr class="plan-divider">
-          <ul class="plan-features" style="text-align:left">
-            <li>Não expiram</li>
-            <li>Acumulam com o plano</li>
-            <li style="color:var(--muted)">Sem WhatsApp</li>
-          </ul>
-          <a href="/registar?pack=m" class="plan-cta plan-cta-amber">Comprar</a>
-        </div>
-
-        <!-- PACK L -->
-        <div class="plan" style="text-align:center">
-          <div class="plan-name">Pack L</div>
-          <div class="plan-price"><span class="eur">26€</span></div>
-          <div class="plan-produtos"><strong>3 500 créditos</strong></div>
-          <hr class="plan-divider">
-          <ul class="plan-features" style="text-align:left">
-            <li>Não expiram</li>
-            <li>Acumulam com o plano</li>
-            <li style="color:var(--muted)">Sem WhatsApp</li>
-          </ul>
-          <a href="/registar?pack=l" class="plan-cta plan-cta-primary">Comprar</a>
-        </div>
-
-      </div>
-      <p style="text-align:center;margin-top:28px;font-size:13px;color:var(--muted)">Precisas de WhatsApp? Adiciona o add-on por <strong style="color:#25d366">3,5€/mês</strong> em qualquer altura.</p>
-    </div>
+    <div id="tab-content-avulso" style="display:none"></div>
 
   </div>
 </section>
 <script>
+var _currentTab = 'mensal';
+
 function showTab(tab) {
+  _currentTab = tab;
   document.getElementById('tab-content-mensal').style.display = tab === 'mensal' ? 'block' : 'none';
   document.getElementById('tab-content-avulso').style.display = tab === 'avulso' ? 'block' : 'none';
   document.getElementById('tab-mensal').style.background = tab === 'mensal' ? 'var(--indigo-d)' : 'transparent';
@@ -505,6 +362,85 @@ function showTab(tab) {
   document.getElementById('tab-avulso').style.background = tab === 'avulso' ? 'var(--indigo-d)' : 'transparent';
   document.getElementById('tab-avulso').style.color = tab === 'avulso' ? '#fff' : 'var(--muted2)';
 }
+
+function fmt(n) { return n.toLocaleString('pt-PT'); }
+function pill(f) { return '<span class="site-pill">'+f+'</span>'; }
+
+function renderMensal(plans) {
+  var mensais = plans.filter(function(p){ return p.tipo === 'mensal'; });
+  var wa = plans.find(function(p){ return p.tipo === 'wa'; });
+  var grid = mensais.map(function(p) {
+    var popular = p.id === 'pro';
+    var isTrial = p.id === 'trial';
+    var fontes = p.fontes && p.fontes.length ? p.fontes.map(pill).join('') : '';
+    var waLine = p.whatsapp_incluido
+      ? '<li>📱 WhatsApp Notify' + (isTrial ? ' <span style="font-size:11px;color:var(--muted)">(1 nº · teste)</span>' : ' incluído') + '</li>'
+      : '';
+    var stores = p.stores_max > 0 ? '<li>'+p.stores_max+' loja'+(p.stores_max>1?'s':'')+'</li>' : '';
+    var cta = isTrial
+      ? '<a href="/registar?plano='+p.id+'" class="plan-cta plan-cta-outline">Começar grátis</a>'
+      : p.id === 'pro'
+        ? '<a href="/registar?plano='+p.id+'" class="plan-cta plan-cta-amber">Começar agora</a>'
+        : p.id === 'business'
+          ? '<a href="/registar?plano='+p.id+'" class="plan-cta plan-cta-primary">Contactar</a>'
+          : '<a href="/registar?plano='+p.id+'" class="plan-cta plan-cta-primary">Começar agora</a>';
+    var creditos = p.creditos_mes > 0 ? fmt(p.creditos_mes)+' créditos' : '—';
+    return '<div class="plan'+(popular?' popular':'')+'">'+
+      (popular?'<div class="plan-popular-tag">Mais popular</div>':'')+
+      '<div class="plan-name">'+p.nome+'</div>'+
+      '<div class="plan-price"><span class="eur">'+p.preco+'€</span>'+(p.preco>0?'<span class="mes">/mês</span>':'')+'</div>'+
+      '<div class="plan-produtos"><strong>'+creditos+'</strong>'+(p.creditos_mes>0?'/mês':'')+'</div>'+
+      (fontes?'<div class="site-pills">'+fontes+'</div>':'')+
+      '<hr class="plan-divider">'+
+      '<ul class="plan-features">'+stores+'<li>Extracção '+(isTrial?'básica':'completa')+'</li><li>JSON estruturado</li>'+waLine+'</ul>'+
+      cta+
+      '</div>';
+  }).join('');
+
+  var waAddon = wa ? '<div style="margin-top:24px;background:var(--bg3);border:1px solid rgba(37,211,102,.2);border-radius:14px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;max-width:700px;margin-left:auto;margin-right:auto">'+
+    '<div style="display:flex;align-items:center;gap:14px">'+
+    '<div style="width:44px;height:44px;background:rgba(37,211,102,.12);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px">📱</div>'+
+    '<div><div style="font-weight:700;color:#fff;font-size:15px">WhatsApp Notify — Add-on</div>'+
+    '<div style="font-size:13px;color:var(--muted2);margin-top:2px">Adiciona o WhatsApp Notify a qualquer plano sem subscrição mensal</div></div></div>'+
+    '<div style="text-align:right;white-space:nowrap"><div style="font-size:22px;font-weight:800;color:#25d366">'+wa.preco.toString().replace('.',',')+'€<span style="font-size:14px;font-weight:500;color:var(--muted2)">/mês</span></div>'+
+    '<div style="font-size:11px;color:var(--muted);margin-top:2px">Números ilimitados</div></div></div>' : '';
+
+  document.getElementById('tab-content-mensal').innerHTML = '<div class="plans-grid">'+grid+'</div>'+waAddon;
+}
+
+function renderAvulso(plans) {
+  var packs = plans.filter(function(p){ return p.tipo === 'avulso'; });
+  var wa = plans.find(function(p){ return p.tipo === 'wa'; });
+  var waPreco = wa ? wa.preco.toString().replace('.',',') : '3,5';
+  var cards = packs.map(function(p, i) {
+    var popular = i === 1;
+    var cta = popular
+      ? '<a href="/registar?pack='+p.id.replace('pack_','')+'" class="plan-cta plan-cta-amber">Comprar</a>'
+      : '<a href="/registar?pack='+p.id.replace('pack_','')+'" class="plan-cta '+(i===2?'plan-cta-primary':'plan-cta-outline')+'">Comprar</a>';
+    return '<div class="plan'+(popular?' popular':'')+'" style="text-align:center">'+
+      (popular?'<div class="plan-popular-tag">Melhor valor</div>':'')+
+      '<div class="plan-name">'+p.nome+'</div>'+
+      '<div class="plan-price"><span class="eur">'+p.preco+'€</span></div>'+
+      '<div class="plan-produtos"><strong>'+fmt(p.creditos_pack)+' créditos</strong></div>'+
+      '<hr class="plan-divider">'+
+      '<ul class="plan-features" style="text-align:left"><li>Não expiram</li><li>Acumulam com o plano</li><li style="color:var(--muted)">Sem WhatsApp</li></ul>'+
+      cta+'</div>';
+  }).join('');
+
+  document.getElementById('tab-content-avulso').innerHTML =
+    '<p style="text-align:center;color:var(--muted2);font-size:14px;margin-bottom:32px">Compra créditos sem subscrição. Não expiram. Sem WhatsApp incluído.</p>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;max-width:750px;margin:0 auto">'+cards+'</div>'+
+    '<p style="text-align:center;margin-top:28px;font-size:13px;color:var(--muted)">Precisas de WhatsApp? Adiciona o add-on por <strong style="color:#25d366">'+waPreco+'€/mês</strong> em qualquer altura.</p>';
+}
+
+fetch('/plans').then(function(r){ return r.json(); }).then(function(plans) {
+  document.getElementById('plans-loading').style.display = 'none';
+  renderMensal(plans);
+  renderAvulso(plans);
+  showTab('mensal');
+}).catch(function() {
+  document.getElementById('plans-loading').textContent = 'Não foi possível carregar os planos.';
+});
 </script>
 
 <!-- API -->

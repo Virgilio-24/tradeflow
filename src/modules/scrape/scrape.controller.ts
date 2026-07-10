@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Body, Param, UseGuards, Req, HttpCode } from '@nestjs/common';
 import { ScrapeService } from './scrape.service';
 import { LicenseGuard } from '../auth/auth.guard';
+import { FirebaseService } from '../../firebase/firebase.service';
 import { IsUrl, IsNumber, Min, Max } from 'class-validator';
 
 class ScrapeDto {
@@ -19,7 +20,26 @@ class DeductDto {
 
 @Controller()
 export class ScrapeController {
-  constructor(private scrape: ScrapeService) {}
+  constructor(private scrape: ScrapeService, private firebase: FirebaseService) {}
+
+  @Get('plans')
+  async getPlans() {
+    const plans = await this.firebase.listPlans();
+    return plans
+      .filter(p => p.activo && ['mensal', 'avulso', 'wa'].includes((p as any).tipo))
+      .map(p => ({
+        id: p.id,
+        nome: p.nome,
+        preco: p.preco,
+        tipo: (p as any).tipo ?? 'mensal',
+        creditos_mes: p.creditos_mes ?? 0,
+        creditos_pack: (p as any).creditos_pack ?? 0,
+        stores_max: p.stores_max,
+        fontes: p.fontes,
+        whatsapp_incluido: (p as any).whatsapp_incluido ?? false,
+        whatsapp_numeros_max: (p as any).whatsapp_numeros_max ?? 0,
+      }));
+  }
 
   @Post('scrape')
   @UseGuards(LicenseGuard)
