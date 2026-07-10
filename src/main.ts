@@ -12,6 +12,7 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
   const logger = new Logger('TradeFlow');
 
+  app.setGlobalPrefix('tradeflow');
   app.enableCors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: '*' });
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
