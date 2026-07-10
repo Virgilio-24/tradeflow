@@ -10,12 +10,19 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Build admin-ui first
+COPY admin-ui/package*.json ./admin-ui/
+RUN cd admin-ui && npm ci
+COPY admin-ui/ ./admin-ui/
+RUN cd admin-ui && npm run build
+
+# Build API
 COPY package*.json ./
 RUN npm ci
-
 RUN npx playwright install chromium --with-deps
-
 COPY . .
+RUN mkdir -p public/admin && cp -r admin-ui/dist/* public/admin/
 RUN npm run build
 RUN npm prune --omit=dev
 

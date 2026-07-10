@@ -5,7 +5,7 @@ import { api } from '../api'
 
 export function Login() {
   const navigate = useNavigate()
-  const [apiUrl, setApiUrl] = useState(localStorage.getItem('tf_api_url') || 'http://localhost:3003')
+  const [apiUrl, setApiUrl] = useState(localStorage.getItem('tf_api_url') || `${window.location.origin}/tradeflow`)
   const [token, setToken] = useState('')
   const [showToken, setShowToken] = useState(false)
   const [loading, setLoading] = useState(false)
