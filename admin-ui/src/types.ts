@@ -22,7 +22,9 @@ export interface Plan {
   id: string
   nome: string
   preco: number
+  tipo?: 'mensal' | 'avulso' | 'wa'
   creditos_mes: number
+  creditos_pack?: number
   stores_max: number
   concorrencia: number
   rate_limit: number
@@ -30,6 +32,8 @@ export interface Plan {
   activo: boolean
   requer_proxies: boolean
   proxy_urls?: string[]
+  whatsapp_incluido?: boolean
+  whatsapp_numeros_max?: number
 }
 
 export interface Job {

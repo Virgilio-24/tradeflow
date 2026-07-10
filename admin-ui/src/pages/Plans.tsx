@@ -125,7 +125,7 @@ export function Plans() {
                     <span className="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-0.5 rounded-lg">{p.id}</span>
                   </div>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {p.preco === 0 ? 'Grátis' : `€${p.preco}/mês`}
+                    {p.preco === 0 ? 'Grátis' : `€${p.preco}${p.tipo === 'mensal' || !p.tipo ? '/mês' : p.tipo === 'wa' ? '/mês' : ''}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -137,8 +137,10 @@ export function Plans() {
 
               <div className="space-y-2 text-sm text-gray-600 mb-4">
                 <div className="flex justify-between">
-                  <span>Créditos/mês</span>
-                  <span className="font-medium text-gray-900">{p.creditos_mes}</span>
+                  <span>{p.tipo === 'avulso' ? 'Créditos (pack)' : 'Créditos/mês'}</span>
+                  <span className="font-medium text-gray-900">
+                    {p.tipo === 'avulso' ? (p.creditos_pack ?? 0) : p.creditos_mes}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Stores máx.</span>
