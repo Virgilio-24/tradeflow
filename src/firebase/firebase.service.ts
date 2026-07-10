@@ -19,7 +19,9 @@ export class FirebaseService implements OnModuleInit {
         credential: admin.credential.cert({
           projectId: this.config.get('FIREBASE_PROJECT_ID'),
           clientEmail: this.config.get('FIREBASE_CLIENT_EMAIL'),
-          privateKey: this.config.get('FIREBASE_PRIVATE_KEY')?.replace(/\\n/g, '\n'),
+          privateKey: this.config.get('FIREBASE_PRIVATE_KEY')
+            ?.replace(/^["']|["']$/g, '')
+            ?.replace(/\\n/g, '\n'),
         }),
       });
     }
