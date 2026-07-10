@@ -9,10 +9,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true, // necessário para validar assinatura do webhook Stripe
   });
-  app.useStaticAssets(join(__dirname, '..', 'public'), { prefix: '/tradeflow' });
+  app.useStaticAssets(join(__dirname, '..', 'public'));
   const logger = new Logger('TradeFlow');
 
-  app.setGlobalPrefix('tradeflow');
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
