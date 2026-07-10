@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Stripe from 'stripe';
+import Stripe = require('stripe');
 import * as admin from 'firebase-admin';
 import { FirebaseService } from '../../firebase/firebase.service';
 
