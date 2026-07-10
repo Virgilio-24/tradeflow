@@ -13,7 +13,16 @@ async function bootstrap() {
   const logger = new Logger('TradeFlow');
 
   app.setGlobalPrefix('tradeflow');
-  app.enableCors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: '*' });
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: '*',
+    exposedHeaders: ['Access-Control-Allow-Private-Network'],
+  });
+  app.use((_req: any, res: any, next: any) => {
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    next();
+  });
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 

@@ -10,11 +10,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       ...(options.headers as Record<string, string>),
     },
   })
-  if (!res.ok) {
+  if (!res.ok && res.status !== 304) {
     const text = await res.text()
     throw new Error(`${res.status}: ${text}`)
   }
-  return res.json()
+  const text = await res.text()
+  return text ? JSON.parse(text) : ({} as T)
 }
 
 export const api = {
