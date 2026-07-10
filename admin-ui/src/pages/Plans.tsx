@@ -160,6 +160,14 @@ export function Plans() {
                 </div>
               </div>
 
+              {/* WhatsApp */}
+              <div className={`flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-xl mb-2 ${p.whatsapp_incluido ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-400'}`}>
+                <span>📱</span>
+                {p.whatsapp_incluido
+                  ? <>WhatsApp incluído {p.whatsapp_numeros_max === 1 ? '(1 nº · teste)' : p.whatsapp_numeros_max === -1 ? '· ilimitado' : `· ${p.whatsapp_numeros_max} nº`}</>
+                  : <>Sem WhatsApp</>}
+              </div>
+
               {/* Proxy status */}
               <div className={`flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-xl mb-4 ${p.requer_proxies ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-500'}`}>
                 {p.requer_proxies
