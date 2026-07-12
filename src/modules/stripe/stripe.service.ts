@@ -59,7 +59,18 @@ export class StripeService {
   }
 
   // Cria uma sessão de checkout no Stripe
-  async createCheckoutSession(priceId: string, accountId: string, email: string): Promise<string> {
+  getPriceIdForPlan(planoId: string): string | null {
+    const entry = Object.entries(this.priceMap).find(([, cfg]) => cfg.plano_id === planoId);
+    return entry ? entry[0] : null;
+  }
+
+  async createCheckoutSession(
+    priceId: string,
+    accountId: string,
+    email: string,
+    successUrl?: string,
+    cancelUrl?: string,
+  ): Promise<string> {
     const cfg = this.priceMap[priceId];
     if (!cfg) throw new BadRequestException('Plano inválido');
 
@@ -70,8 +81,8 @@ export class StripeService {
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email,
       metadata: { account_id: accountId, price_id: priceId },
-      success_url: `${this.config.get('APP_URL')}/registar?sucesso=1`,
-      cancel_url: `${this.config.get('APP_URL')}/#precos`,
+      success_url: successUrl ?? `${this.config.get('APP_URL')}/registar?sucesso=1`,
+      cancel_url: cancelUrl ?? `${this.config.get('APP_URL')}/#precos`,
     });
 
     return session.url!;

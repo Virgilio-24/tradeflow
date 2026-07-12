@@ -17,14 +17,26 @@ export class StripeController {
 
   // Cria sessão de checkout — chamado pelo frontend da landing page
   @Post('checkout')
-  async checkout(@Body() body: { price_id: string; account_id: string }) {
-    const { price_id, account_id } = body;
-    if (!price_id || !account_id) throw new BadRequestException('price_id e account_id obrigatórios');
+  async checkout(@Body() body: {
+    price_id?: string;
+    plano_id?: string;
+    account_id: string;
+    success_url?: string;
+    cancel_url?: string;
+  }) {
+    const { account_id, success_url, cancel_url } = body;
+    if (!account_id) throw new BadRequestException('account_id obrigatório');
+
+    let price_id = body.price_id;
+    if (!price_id && body.plano_id) {
+      price_id = this.stripeService.getPriceIdForPlan(body.plano_id) ?? undefined;
+    }
+    if (!price_id) throw new BadRequestException('price_id ou plano_id obrigatório');
 
     const account = await this.firebase.getAccount(account_id);
     if (!account) throw new BadRequestException('Conta não encontrada');
 
-    const url = await this.stripeService.createCheckoutSession(price_id, account_id, account.email);
+    const url = await this.stripeService.createCheckoutSession(price_id, account_id, account.email, success_url, cancel_url);
     return { url };
   }
 
