@@ -81,6 +81,11 @@ export class StripeService {
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email,
       metadata: { account_id: accountId, price_id: priceId },
+      // Para subscrições mensais: propagar account_id para o objecto Subscription
+      // para que invoice.paid consiga identificar a conta
+      ...(mode === 'subscription' ? {
+        subscription_data: { metadata: { account_id: accountId } },
+      } : {}),
       success_url: successUrl ?? `${this.config.get('APP_URL')}/registar?sucesso=1`,
       cancel_url: cancelUrl ?? `${this.config.get('APP_URL')}/#precos`,
     });
