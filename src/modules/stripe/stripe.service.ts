@@ -139,8 +139,27 @@ export class StripeService {
         renovacao,
         numeros_max: cfg.whatsapp_numeros_max,
       });
+    } else if (cfg.tipo === 'mensal') {
+      // Plano mensal: activar imediatamente no checkout completed
+      // (invoice.paid fará o mesmo na renovação — idempotente)
+      const renovacao = admin.firestore.Timestamp.fromDate(
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      );
+      const stripeCustomerId = session.customer as string | null;
+      const stripeSubscriptionId = session.subscription as string | null;
+      await this.firebase.updateAccount(accountId, {
+        plano_id: cfg.plano_id as any,
+        billing_status: 'active',
+        creditos_usados: 0,
+        creditos_limite: cfg.creditos,
+        whatsapp_ativo: cfg.whatsapp,
+        whatsapp_numeros_max: cfg.whatsapp_numeros_max,
+        renovacao_em: renovacao,
+        ...(stripeCustomerId ? { stripe_customer_id: stripeCustomerId } : {}),
+        ...(stripeSubscriptionId ? { stripe_subscription_id: stripeSubscriptionId } : {}),
+      });
+      this.logger.log(`Plan activated on checkout — account: ${accountId}, plano: ${cfg.plano_id}`);
     }
-    // Planos mensais: tratados via invoice.paid
   }
 
   // Renovação mensal de subscrição
