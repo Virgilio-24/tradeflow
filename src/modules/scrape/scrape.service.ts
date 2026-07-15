@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
 import { FirebaseService } from '../../firebase/firebase.service';
 import { ExtractorFactory } from '../../extractors/factory/extractor.factory';
+import { MailService } from '../../mail/mail.service';
 import { Account, Store, JobType, JOB_COST } from '../../common/types';
+
+const AVISO_PCT = 80;
 
 @Injectable()
 export class ScrapeService {
   constructor(
     private firebase: FirebaseService,
     private factory: ExtractorFactory,
+    private mail: MailService,
   ) {}
 
   async createJob(
@@ -76,6 +80,14 @@ export class ScrapeService {
     }
 
     await this.firebase.decrementCredits(account.id, amount);
+
+    // Aviso de créditos baixos — envia só quando cruza o limiar de 80%
+    const pctAntes = Math.floor((account.creditos_usados / account.creditos_limite) * 100);
+    const pctDepois = Math.floor(((account.creditos_usados + amount) / account.creditos_limite) * 100);
+    if (pctAntes < AVISO_PCT && pctDepois >= AVISO_PCT) {
+      const acc = await this.firebase.getAccount(account.id);
+      if (acc) this.mail.enviarAvisoCreditosBaixos({ nome: acc.nome, email: acc.email, usados: account.creditos_usados + amount, limite: account.creditos_limite, pct: pctDepois });
+    }
 
     await this.firebase.createLog({
       account_id: account.id,

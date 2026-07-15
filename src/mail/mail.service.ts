@@ -151,6 +151,44 @@ export class MailService {
     }
   }
 
+  async enviarAvisoCreditosBaixos(dados: { nome: string; email: string; usados: number; limite: number; pct: number }) {
+    if (!this.transporter) return;
+    try {
+      await this.transporter.sendMail({
+        from: `"TradeFlow" <${this.config.get('GMAIL_USER')}>`,
+        to: dados.email,
+        subject: `Créditos TradeFlow quase esgotados — ${dados.pct}% utilizado`,
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+            <div style="background:#f59e0b;padding:24px 32px;border-radius:12px 12px 0 0">
+              <h1 style="color:#fff;margin:0;font-size:22px">⚡ TradeFlow</h1>
+              <p style="color:rgba(255,255,255,0.9);margin:4px 0 0;font-size:14px">Aviso de créditos</p>
+            </div>
+            <div style="background:#f8fafc;padding:32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+              <p style="font-size:15px;margin:0 0 16px">Olá <strong>${dados.nome}</strong>,</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">Já utilizaste <strong>${dados.pct}%</strong> dos créditos deste mês.</p>
+              <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;width:140px">Créditos usados</td>
+                  <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:700">${dados.usados} / ${dados.limite}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;font-size:13px;color:#64748b">Restantes</td>
+                  <td style="padding:10px 0;font-size:13px;font-weight:700;color:#f59e0b">${dados.limite - dados.usados}</td>
+                </tr>
+              </table>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">Podes comprar um pack de créditos extra ou fazer upgrade do plano no painel de administração.</p>
+              <p style="font-size:13px;color:#94a3b8;margin:0">Dúvidas? Responde a este email.<br>— Equipa TradeFlow</p>
+            </div>
+          </div>
+        `,
+      });
+      this.logger.log(`Aviso créditos baixos enviado para ${dados.email} (${dados.pct}%)`);
+    } catch (err: any) {
+      this.logger.error(`Falha ao enviar aviso créditos para ${dados.email}: ${err.message}`);
+    }
+  }
+
   async enviarTrialExpirado(dados: { nome: string; email: string }) {
     if (!this.transporter) return;
     try {

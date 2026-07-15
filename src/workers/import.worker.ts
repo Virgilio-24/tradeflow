@@ -4,7 +4,10 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { BrowserService } from '../browser/browser.service';
 import { ExtractorFactory } from '../extractors/factory/extractor.factory';
 import { ClaudeExtractor } from '../extractors/claude/claude.extractor';
+import { MailService } from '../mail/mail.service';
 import { JOB_COST } from '../common/types';
+
+const AVISO_PCT = 80;
 
 @Injectable()
 export class ImportWorker {
@@ -16,6 +19,7 @@ export class ImportWorker {
     private browser: BrowserService,
     private factory: ExtractorFactory,
     private claude: ClaudeExtractor,
+    private mail: MailService,
   ) {}
 
   // Verificar fila a cada 3 segundos
@@ -87,7 +91,12 @@ export class ImportWorker {
 
       // Decrementar créditos
       const custo = JOB_COST[job.tipo];
+      const pctAntes = Math.floor(((account!.creditos_usados) / account!.creditos_limite) * 100);
       await this.firebase.decrementCredits(job.account_id, custo);
+      const pctDepois = Math.floor(((account!.creditos_usados + custo) / account!.creditos_limite) * 100);
+      if (pctAntes < AVISO_PCT && pctDepois >= AVISO_PCT) {
+        this.mail.enviarAvisoCreditosBaixos({ nome: account!.nome, email: account!.email, usados: account!.creditos_usados + custo, limite: account!.creditos_limite, pct: pctDepois });
+      }
 
       await this.firebase.createLog({
         account_id: job.account_id,
