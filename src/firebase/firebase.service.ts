@@ -307,4 +307,19 @@ export class FirebaseService implements OnModuleInit {
     const snap = await query.get();
     return snap.docs.map(d => ({ id: d.id, ...d.data() } as Log));
   }
+
+  // ── SITE COOKIES ──
+
+  async getSiteCookies(domain: string): Promise<string | null> {
+    const doc = await this.db.collection('site_cookies').doc(domain).get();
+    if (!doc.exists) return null;
+    return (doc.data()?.cookies as string) ?? null;
+  }
+
+  async setSiteCookies(domain: string, cookies: string): Promise<void> {
+    await this.db.collection('site_cookies').doc(domain).set({
+      cookies,
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
 }

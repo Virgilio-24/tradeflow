@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Page } from 'playwright';
 import { Extractor } from '../base/extractor.interface';
 import { ProductData, MarketplaceSource, ProductVariant } from '../../common/types';
+import { FirebaseService } from '../../firebase/firebase.service';
 
 const SIDECAR_BRANDS: Record<string, MarketplaceSource> = {
   'shein.com':        'shein',
@@ -30,6 +31,8 @@ export class SidecarExtractor implements Extractor {
   readonly source: MarketplaceSource = 'shein';
   private readonly logger = new Logger(SidecarExtractor.name);
 
+  constructor(private firebase: FirebaseService) {}
+
   canHandle(url: string): boolean {
     return !!this.sourceForUrl(url);
   }
@@ -52,12 +55,14 @@ export class SidecarExtractor implements Extractor {
       throw new Error(`SIDECAR_URL not configured — cannot extract ${fonte} product`);
     }
 
-    const data = await this.callSidecar(sidecarUrl, url, options?.proxyUrls);
+    const domain = new URL(url).hostname.replace(/^www\./, '');
+    const cookieString = await this.firebase.getSiteCookies(domain);
+    const data = await this.callSidecar(sidecarUrl, url, options?.proxyUrls, cookieString ?? undefined);
     this.logger.log(`Sidecar ok [${data._meta?.sourceChain?.[0] ?? 'unknown'}] — "${(data.title ?? '').slice(0, 60)}"`);
     return this.normalize(data, url, fonte);
   }
 
-  private async callSidecar(sidecarUrl: string, url: string, proxyUrls?: string[]): Promise<any> {
+  private async callSidecar(sidecarUrl: string, url: string, proxyUrls?: string[], cookieString?: string): Promise<any> {
     const encoded = encodeURIComponent(url);
     let endpoint = `${sidecarUrl}/api/product/auto?url=${encoded}`;
     if (proxyUrls && proxyUrls.length > 0) {
@@ -66,6 +71,7 @@ export class SidecarExtractor implements Extractor {
     const headers: Record<string, string> = {};
     const apiKey = process.env.SIDECAR_API_KEY;
     if (apiKey) headers['X-API-Key'] = apiKey;
+    if (cookieString) headers['Cookie'] = cookieString;
 
     const res = await fetch(endpoint, {
       headers,

@@ -7,9 +7,10 @@ import { ClaudeExtractor } from '../../extractors/claude/claude.extractor';
 import { ExtractorFactory } from '../../extractors/factory/extractor.factory';
 import { ImportWorker } from '../../workers/import.worker';
 import { MailModule } from '../../mail/mail.module';
+import { FirebaseModule } from '../../firebase/firebase.module';
 
 @Module({
-  imports: [MailModule],
+  imports: [MailModule, FirebaseModule],
   controllers: [ScrapeController],
   providers: [
     ScrapeService,

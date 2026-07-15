@@ -120,6 +120,18 @@ export class BrowserService implements OnModuleInit, OnModuleDestroy {
     return this.pool.filter(e => !e.inUse).length;
   }
 
+  async injectCookies(page: Page, domain: string, cookieString: string): Promise<void> {
+    try {
+      const cookies = cookieString.split(';').map(pair => {
+        const [name, ...rest] = pair.trim().split('=');
+        return { name: name.trim(), value: rest.join('=').trim(), domain: `.${domain}`, path: '/' };
+      }).filter(c => c.name && c.value);
+      if (cookies.length > 0) await page.context().addCookies(cookies);
+    } catch (err) {
+      this.logger.warn(`Failed to inject cookies for ${domain}: ${err}`);
+    }
+  }
+
   private async close() {
     for (const entry of this.pool) {
       await entry.page.close().catch(() => {});

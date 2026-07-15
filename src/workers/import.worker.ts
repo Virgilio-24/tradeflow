@@ -63,6 +63,11 @@ export class ImportWorker {
       // Adquirir página do pool
       page = await this.browser.acquirePage();
 
+      // Injectar cookies guardados para este domínio
+      const domain = new URL(job.url).hostname.replace(/^www\./, '');
+      const cookieStr = await this.firebase.getSiteCookies(domain);
+      if (cookieStr) await this.browser.injectCookies(page, domain, cookieStr);
+
       // Delay humano antes de começar
       await this.sleep(500 + Math.random() * 1000);
 

@@ -9,6 +9,7 @@ import { RegistarModule } from './modules/registar/registar.module';
 import { MailModule } from './mail/mail.module';
 import { StripeModule } from './modules/stripe/stripe.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { CookiesModule } from './modules/cookies/cookies.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { BillingModule } from './modules/billing/billing.module';
     MailModule,
     StripeModule,
     BillingModule,
+    CookiesModule,
   ],
 })
 export class AppModule {}
