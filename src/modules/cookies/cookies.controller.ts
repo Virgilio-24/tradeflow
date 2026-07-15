@@ -25,6 +25,25 @@ export class CookiesController {
     return res.json({ ok: true, domain });
   }
 
+  // Chamado pelo sidecar após save-vnc — guarda cookies do Playwright storageState
+  @Post('sync')
+  async syncCookies(
+    @Body() body: { domain: string; cookies: string },
+    @Headers('x-admin-token') token: string,
+    @Res() res: Response,
+  ) {
+    const expected = process.env.TRADEFLOW_ADMIN_TOKEN || process.env.ADMIN_SECRET;
+    if (!expected || token !== expected) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (!body.domain || !body.cookies) {
+      return res.status(400).json({ error: 'domain e cookies obrigatórios' });
+    }
+    const domain = body.domain.replace(/^www\./, '');
+    await this.firebase.setSiteCookies(domain, body.cookies);
+    return res.json({ ok: true, domain });
+  }
+
   @Get(':domain')
   async getCookies(
     @Param('domain') domain: string,
