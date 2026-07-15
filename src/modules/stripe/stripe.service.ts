@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Stripe = require('stripe');
 import * as admin from 'firebase-admin';
 import { FirebaseService } from '../../firebase/firebase.service';
+import { MailService } from '../../mail/mail.service';
 
 // Mapeamento Price ID → créditos e permissões
 // Preencher com os IDs reais do Stripe Dashboard
@@ -23,6 +24,7 @@ export class StripeService {
   constructor(
     private config: ConfigService,
     private firebase: FirebaseService,
+    private mail: MailService,
   ) {
     this.stripe = new Stripe(this.config.get<string>('STRIPE_SECRET_KEY')!);
 
@@ -211,6 +213,7 @@ export class StripeService {
     this.logger.log(`Subscription updated — account: ${accountId}, plano: ${cfg.plano_id}`);
 
     const periodEnd = (subscription as any).current_period_end as number;
+    const account = await this.firebase.getAccount(accountId);
     await this.firebase.updateAccount(accountId, {
       plano_id: cfg.plano_id as any,
       billing_status: 'active',
@@ -219,6 +222,9 @@ export class StripeService {
       whatsapp_numeros_max: cfg.whatsapp_numeros_max,
       renovacao_em: admin.firestore.Timestamp.fromMillis(periodEnd * 1000),
     });
+    if (account) {
+      this.mail.enviarMudancaPlano({ nome: account.nome, email: account.email, plano: cfg.plano_id! });
+    }
   }
 
   // Subscrição cancelada
@@ -228,12 +234,16 @@ export class StripeService {
     if (!accountId) return;
 
     this.logger.log(`Subscription cancelled — account: ${accountId}`);
+    const account = await this.firebase.getAccount(accountId);
     await this.firebase.updateAccount(accountId, {
       billing_status: 'suspended',
       plano_id: 'trial',
       creditos_limite: 20,
     } as any);
     await this.firebase.deactivateWhatsapp(accountId);
+    if (account) {
+      this.mail.enviarCancelamento({ nome: account.nome, email: account.email });
+    }
   }
 
   async createPortalSession(accountId: string, returnUrl: string): Promise<string> {

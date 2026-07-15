@@ -82,6 +82,75 @@ export class MailService {
     }
   }
 
+  async enviarCancelamento(dados: { nome: string; email: string }) {
+    if (!this.transporter) return;
+    try {
+      await this.transporter.sendMail({
+        from: `"TradeFlow" <${this.config.get('GMAIL_USER')}>`,
+        to: dados.email,
+        subject: 'A tua subscrição TradeFlow foi cancelada',
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+            <div style="background:#6366f1;padding:24px 32px;border-radius:12px 12px 0 0">
+              <h1 style="color:#fff;margin:0;font-size:22px">⚡ TradeFlow</h1>
+            </div>
+            <div style="background:#f8fafc;padding:32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+              <p style="font-size:15px;margin:0 0 16px">Olá <strong>${dados.nome}</strong>,</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">A tua subscrição foi cancelada. O acesso à API foi suspenso.</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">Se foi um engano ou queres reactivar, responde a este email ou acede ao painel e escolhe um novo plano.</p>
+              <p style="font-size:13px;color:#94a3b8;margin:0">— Equipa TradeFlow</p>
+            </div>
+          </div>
+        `,
+      });
+      this.logger.log(`Cancelamento enviado para ${dados.email}`);
+    } catch (err: any) {
+      this.logger.error(`Falha ao enviar cancelamento para ${dados.email}: ${err.message}`);
+    }
+  }
+
+  async enviarMudancaPlano(dados: { nome: string; email: string; plano: string }) {
+    if (!this.transporter) return;
+    const limites: Record<string, string> = {
+      starter: '800 produtos/mês',
+      pro: '2 500 produtos/mês',
+      business: '8 000 produtos/mês',
+    };
+    try {
+      await this.transporter.sendMail({
+        from: `"TradeFlow" <${this.config.get('GMAIL_USER')}>`,
+        to: dados.email,
+        subject: `Plano actualizado para ${dados.plano.toUpperCase()} — TradeFlow`,
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+            <div style="background:#6366f1;padding:24px 32px;border-radius:12px 12px 0 0">
+              <h1 style="color:#fff;margin:0;font-size:22px">⚡ TradeFlow</h1>
+              <p style="color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:14px">Plano actualizado</p>
+            </div>
+            <div style="background:#f8fafc;padding:32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+              <p style="font-size:15px;margin:0 0 16px">Olá <strong>${dados.nome}</strong>,</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">O teu plano foi actualizado com sucesso.</p>
+              <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;width:120px">Novo plano</td>
+                  <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:700;color:#6366f1">${dados.plano.toUpperCase()}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;font-size:13px;color:#64748b">Limite mensal</td>
+                  <td style="padding:10px 0;font-size:13px;font-weight:600">${limites[dados.plano] ?? ''}</td>
+                </tr>
+              </table>
+              <p style="font-size:13px;color:#94a3b8;margin:0">Dúvidas? Responde a este email.<br>— Equipa TradeFlow</p>
+            </div>
+          </div>
+        `,
+      });
+      this.logger.log(`Mudança de plano enviada para ${dados.email} — ${dados.plano}`);
+    } catch (err: any) {
+      this.logger.error(`Falha ao enviar mudança de plano para ${dados.email}: ${err.message}`);
+    }
+  }
+
   async notificarNovaSubscricao(dados: {
     nome: string;
     email: string;
