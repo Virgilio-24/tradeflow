@@ -163,6 +163,8 @@ export class StripeService {
         ...(stripeSubscriptionId ? { stripe_subscription_id: stripeSubscriptionId } : {}),
       });
       this.logger.log(`Plan activated on checkout — account: ${accountId}, plano: ${cfg.plano_id}`);
+      const acc = await this.firebase.getAccount(accountId);
+      if (acc) this.mail.enviarConfirmacaoPlano({ nome: acc.nome, email: acc.email, plano: cfg.plano_id!, creditos: cfg.creditos });
     }
   }
 
@@ -244,6 +246,15 @@ export class StripeService {
     if (account) {
       this.mail.enviarCancelamento({ nome: account.nome, email: account.email });
     }
+  }
+
+  async cancelSubscription(accountId: string): Promise<void> {
+    const account = await this.firebase.getAccount(accountId);
+    if (!account?.stripe_subscription_id) throw new BadRequestException('Sem subscrição activa');
+    await this.stripe.subscriptions.update(account.stripe_subscription_id, {
+      cancel_at_period_end: true,
+    });
+    this.logger.log(`Subscription marked cancel_at_period_end — account: ${accountId}`);
   }
 
   async createPortalSession(accountId: string, returnUrl: string): Promise<string> {

@@ -40,6 +40,15 @@ export class StripeController {
     return { url };
   }
 
+  // Cancela subscrição no fim do período actual
+  @Post('cancel')
+  async cancel(@Body() body: { account_id: string }) {
+    const { account_id } = body;
+    if (!account_id) throw new BadRequestException('account_id obrigatório');
+    await this.stripeService.cancelSubscription(account_id);
+    return { ok: true };
+  }
+
   // Cria sessão do Customer Portal — permite gerir subscrição
   @Post('portal')
   async portal(@Body() body: { account_id: string; return_url?: string }) {

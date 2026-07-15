@@ -151,6 +151,44 @@ export class MailService {
     }
   }
 
+  async enviarConfirmacaoPlano(dados: { nome: string; email: string; plano: string; creditos: number }) {
+    if (!this.transporter) return;
+    const precos: Record<string, string> = { starter: '12€/mês', pro: '29€/mês', business: '89€/mês' };
+    try {
+      await this.transporter.sendMail({
+        from: `"TradeFlow" <${this.config.get('GMAIL_USER')}>`,
+        to: dados.email,
+        subject: `Subscrição confirmada — Plano ${dados.plano.toUpperCase()} TradeFlow`,
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+            <div style="background:#6366f1;padding:24px 32px;border-radius:12px 12px 0 0">
+              <h1 style="color:#fff;margin:0;font-size:22px">⚡ TradeFlow</h1>
+              <p style="color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:14px">Subscrição confirmada</p>
+            </div>
+            <div style="background:#f8fafc;padding:32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+              <p style="font-size:15px;margin:0 0 16px">Olá <strong>${dados.nome}</strong>,</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">A tua subscrição foi activada com sucesso.</p>
+              <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;width:140px">Plano</td>
+                  <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:700;color:#6366f1">${dados.plano.toUpperCase()} — ${precos[dados.plano] ?? ''}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;font-size:13px;color:#64748b">Créditos mensais</td>
+                  <td style="padding:10px 0;font-size:13px;font-weight:600">${dados.creditos.toLocaleString('pt-PT')}</td>
+                </tr>
+              </table>
+              <p style="font-size:13px;color:#94a3b8;margin:0">Dúvidas? Responde a este email.<br>— Equipa TradeFlow</p>
+            </div>
+          </div>
+        `,
+      });
+      this.logger.log(`Confirmação de plano enviada para ${dados.email} — ${dados.plano}`);
+    } catch (err: any) {
+      this.logger.error(`Falha ao enviar confirmação de plano para ${dados.email}: ${err.message}`);
+    }
+  }
+
   async enviarAvisoCreditosBaixos(dados: { nome: string; email: string; usados: number; limite: number; pct: number }) {
     if (!this.transporter) return;
     try {
