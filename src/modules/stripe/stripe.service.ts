@@ -108,6 +108,8 @@ export class StripeService {
       await this.onCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
     } else if (event.type === 'invoice.paid') {
       await this.onInvoicePaid(event.data.object as Stripe.Invoice);
+    } else if (event.type === 'customer.subscription.updated') {
+      await this.onSubscriptionUpdated(event.data.object as Stripe.Subscription);
     } else if (event.type === 'customer.subscription.deleted') {
       await this.onSubscriptionCancelled(event.data.object as Stripe.Subscription);
     }
@@ -190,6 +192,31 @@ export class StripeService {
       whatsapp_numeros_max: cfg.whatsapp_numeros_max,
       stripe_subscription_id: subscription.id,
       stripe_customer_id: subscription.customer as string,
+      renovacao_em: admin.firestore.Timestamp.fromMillis(periodEnd * 1000),
+    });
+  }
+
+  // Upgrade/downgrade de plano via portal
+  private async onSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
+    if (subscription.status !== 'active') return;
+
+    const priceId = subscription.items.data[0]?.price.id;
+    const accountId = subscription.metadata?.account_id
+      ?? (await this.getAccountByCustomer(subscription.customer as string));
+    if (!accountId || !priceId) return;
+
+    const cfg = this.priceMap[priceId];
+    if (!cfg || cfg.tipo !== 'mensal') return;
+
+    this.logger.log(`Subscription updated — account: ${accountId}, plano: ${cfg.plano_id}`);
+
+    const periodEnd = (subscription as any).current_period_end as number;
+    await this.firebase.updateAccount(accountId, {
+      plano_id: cfg.plano_id as any,
+      billing_status: 'active',
+      creditos_limite: cfg.creditos,
+      whatsapp_ativo: cfg.whatsapp,
+      whatsapp_numeros_max: cfg.whatsapp_numeros_max,
       renovacao_em: admin.firestore.Timestamp.fromMillis(periodEnd * 1000),
     });
   }
