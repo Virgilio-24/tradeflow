@@ -8,6 +8,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { RegistarModule } from './modules/registar/registar.module';
 import { MailModule } from './mail/mail.module';
 import { StripeModule } from './modules/stripe/stripe.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { StripeModule } from './modules/stripe/stripe.module';
     RegistarModule,
     MailModule,
     StripeModule,
+    BillingModule,
   ],
 })
 export class AppModule {}

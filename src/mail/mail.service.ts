@@ -151,6 +151,60 @@ export class MailService {
     }
   }
 
+  async enviarTrialExpirado(dados: { nome: string; email: string }) {
+    if (!this.transporter) return;
+    try {
+      await this.transporter.sendMail({
+        from: `"TradeFlow" <${this.config.get('GMAIL_USER')}>`,
+        to: dados.email,
+        subject: 'O teu trial TradeFlow expirou',
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+            <div style="background:#6366f1;padding:24px 32px;border-radius:12px 12px 0 0">
+              <h1 style="color:#fff;margin:0;font-size:22px">⚡ TradeFlow</h1>
+            </div>
+            <div style="background:#f8fafc;padding:32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+              <p style="font-size:15px;margin:0 0 16px">Olá <strong>${dados.nome}</strong>,</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">O teu período de trial terminou e o acesso à API foi suspenso.</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">Para continuar a usar o TradeFlow, escolhe um plano no painel de administração.</p>
+              <p style="font-size:13px;color:#94a3b8;margin:0">Dúvidas? Responde a este email.<br>— Equipa TradeFlow</p>
+            </div>
+          </div>
+        `,
+      });
+      this.logger.log(`Trial expirado enviado para ${dados.email}`);
+    } catch (err: any) {
+      this.logger.error(`Falha ao enviar trial expirado para ${dados.email}: ${err.message}`);
+    }
+  }
+
+  async enviarAvisoTrialExpira(dados: { nome: string; email: string; dias: number }) {
+    if (!this.transporter) return;
+    try {
+      await this.transporter.sendMail({
+        from: `"TradeFlow" <${this.config.get('GMAIL_USER')}>`,
+        to: dados.email,
+        subject: `O teu trial TradeFlow termina em ${dados.dias} dias`,
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+            <div style="background:#6366f1;padding:24px 32px;border-radius:12px 12px 0 0">
+              <h1 style="color:#fff;margin:0;font-size:22px">⚡ TradeFlow</h1>
+            </div>
+            <div style="background:#f8fafc;padding:32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+              <p style="font-size:15px;margin:0 0 16px">Olá <strong>${dados.nome}</strong>,</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">O teu trial termina em <strong>${dados.dias} dias</strong>. Após esse período, o acesso à API será suspenso.</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">Escolhe um plano agora para não perder o acesso.</p>
+              <p style="font-size:13px;color:#94a3b8;margin:0">Dúvidas? Responde a este email.<br>— Equipa TradeFlow</p>
+            </div>
+          </div>
+        `,
+      });
+      this.logger.log(`Aviso trial expira (${dados.dias}d) enviado para ${dados.email}`);
+    } catch (err: any) {
+      this.logger.error(`Falha ao enviar aviso trial para ${dados.email}: ${err.message}`);
+    }
+  }
+
   async notificarNovaSubscricao(dados: {
     nome: string;
     email: string;
