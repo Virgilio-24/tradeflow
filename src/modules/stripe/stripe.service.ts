@@ -209,6 +209,16 @@ export class StripeService {
     await this.firebase.deactivateWhatsapp(accountId);
   }
 
+  async createPortalSession(accountId: string, returnUrl: string): Promise<string> {
+    const account = await this.firebase.getAccount(accountId);
+    if (!account?.stripe_customer_id) throw new BadRequestException('Sem customer Stripe associado');
+    const session = await this.stripe.billingPortal.sessions.create({
+      customer: account.stripe_customer_id,
+      return_url: returnUrl || `${this.config.get('APP_URL')}/admin/tradeflow`,
+    });
+    return session.url;
+  }
+
   private async getAccountByCustomer(customerId: string): Promise<string | null> {
     const accounts = await this.firebase.listAccounts();
     const match = accounts.find(a => a.stripe_customer_id === customerId);

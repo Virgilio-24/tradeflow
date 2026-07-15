@@ -40,6 +40,15 @@ export class StripeController {
     return { url };
   }
 
+  // Cria sessão do Customer Portal — permite gerir subscrição
+  @Post('portal')
+  async portal(@Body() body: { account_id: string; return_url?: string }) {
+    const { account_id, return_url } = body;
+    if (!account_id) throw new BadRequestException('account_id obrigatório');
+    const url = await this.stripeService.createPortalSession(account_id, return_url ?? '');
+    return { url };
+  }
+
   // Webhook do Stripe — deve ser raw body para validação da assinatura
   @Post('webhook')
   async webhook(
