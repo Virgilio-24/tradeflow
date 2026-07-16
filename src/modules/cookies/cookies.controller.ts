@@ -82,9 +82,13 @@ export class CookiesController {
 
     const novncUrl = process.env.NOVNC_URL || sidecarUrl.replace(/^https?:\/\//, 'http://').replace(/:\d+$/, '') + ':6080/vnc.html';
 
+    const sidecarHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    const sidecarKey = process.env.SIDECAR_API_KEY;
+    if (sidecarKey) sidecarHeaders['X-API-Key'] = sidecarKey;
+
     const r = await fetch(`${sidecarUrl}/api/session/capture-vnc`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: sidecarHeaders,
       body: JSON.stringify({ site, url: body.url }),
     });
     const data = await r.json();
@@ -106,9 +110,13 @@ export class CookiesController {
     const site = DOMAIN_TO_SITE[domain] || DOMAIN_TO_SITE[domain.replace(/^www\./, '')];
     if (!site) return res.status(400).json({ error: `Site não suportado: ${domain}` });
 
+    const saveHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    const saveKey = process.env.SIDECAR_API_KEY;
+    if (saveKey) saveHeaders['X-API-Key'] = saveKey;
+
     const r = await fetch(`${sidecarUrl}/api/session/save-vnc`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: saveHeaders,
       body: JSON.stringify({ site }),
     });
     const data = await r.json();
