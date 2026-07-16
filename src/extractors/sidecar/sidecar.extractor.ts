@@ -71,7 +71,17 @@ export class SidecarExtractor implements Extractor {
     const headers: Record<string, string> = {};
     const apiKey = process.env.SIDECAR_API_KEY;
     if (apiKey) headers['X-API-Key'] = apiKey;
-    if (cookieString) headers['Cookie'] = cookieString;
+    if (cookieString) {
+      // Converter JSON completo (extensão Chrome) para string name=value
+      if (cookieString.trimStart().startsWith('[')) {
+        try {
+          const arr = JSON.parse(cookieString) as { name: string; value: string }[];
+          headers['Cookie'] = arr.map(c => `${c.name}=${c.value}`).join('; ');
+        } catch { headers['Cookie'] = cookieString; }
+      } else {
+        headers['Cookie'] = cookieString;
+      }
+    }
 
     const res = await fetch(endpoint, {
       headers,
