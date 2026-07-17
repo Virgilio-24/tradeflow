@@ -24,6 +24,7 @@ const SIDECAR_BRANDS: Record<string, MarketplaceSource> = {
   'pullandbear.com':  'pullandbear',
   'bershka.com':      'bershka',
   'aboutyou.com':     'aboutyou',
+  'aliexpress.com':   'aliexpress',
 };
 
 @Injectable()
