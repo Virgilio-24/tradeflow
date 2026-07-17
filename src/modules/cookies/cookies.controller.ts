@@ -86,12 +86,18 @@ export class CookiesController {
     const sidecarKey = process.env.SIDECAR_API_KEY;
     if (sidecarKey) sidecarHeaders['X-API-Key'] = sidecarKey;
 
-    const r = await fetch(`${sidecarUrl}/api/session/capture-vnc`, {
-      method: 'POST',
-      headers: sidecarHeaders,
-      body: JSON.stringify({ site, url: body.url }),
-    });
-    const data = await r.json();
+    let r: Response;
+    try {
+      r = await fetch(`${sidecarUrl}/api/session/capture-vnc`, {
+        method: 'POST',
+        headers: sidecarHeaders,
+        body: JSON.stringify({ site, url: body.url }),
+      });
+    } catch (e: any) {
+      return res.status(503).json({ error: `Sidecar inacessível: ${e.message}`, site, novncUrl });
+    }
+    let data: any;
+    try { data = await r.json(); } catch { data = {}; }
     return res.status(r.status).json({ ...data, site, novncUrl });
   }
 
