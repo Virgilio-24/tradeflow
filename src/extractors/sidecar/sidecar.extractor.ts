@@ -56,8 +56,12 @@ export class SidecarExtractor implements Extractor {
       throw new Error(`SIDECAR_URL not configured — cannot extract ${fonte} product`);
     }
 
-    const domain = new URL(url).hostname.replace(/^www\./, '');
-    const cookieString = await this.firebase.getSiteCookies(domain);
+    const hostname = new URL(url).hostname;
+    // Try full hostname first (e.g. pt.aliexpress.com), then base domain (aliexpress.com)
+    const baseDomain = hostname.replace(/^[^.]+\.(?=[^.]+\.[^.]+)/, '');
+    const cookieString =
+      (await this.firebase.getSiteCookies(hostname)) ??
+      (hostname !== baseDomain ? await this.firebase.getSiteCookies(baseDomain) : null);
     const data = await this.callSidecar(sidecarUrl, url, options?.proxyUrls, cookieString ?? undefined);
     this.logger.log(`Sidecar ok [${data._meta?.sourceChain?.[0] ?? 'unknown'}] — "${(data.title ?? '').slice(0, 60)}"`);
     return this.normalize(data, url, fonte);
