@@ -3,7 +3,6 @@ import { Cron } from '@nestjs/schedule';
 import { FirebaseService } from '../firebase/firebase.service';
 import { BrowserService } from '../browser/browser.service';
 import { ExtractorFactory } from '../extractors/factory/extractor.factory';
-import { ClaudeExtractor } from '../extractors/claude/claude.extractor';
 import { MailService } from '../mail/mail.service';
 import { JOB_COST } from '../common/types';
 
@@ -18,7 +17,6 @@ export class ImportWorker {
     private firebase: FirebaseService,
     private browser: BrowserService,
     private factory: ExtractorFactory,
-    private claude: ClaudeExtractor,
     private mail: MailService,
   ) {}
 
@@ -75,21 +73,7 @@ export class ImportWorker {
         ? plan.proxy_urls
         : undefined;
 
-      // Tenta sidecar primeiro; se falhar usa Claude como fallback
-      let resultado;
-      try {
-        resultado = await extractor.extract(job.url, page, { proxyUrls });
-      } catch (sidecarErr: any) {
-        this.logger.warn(`Sidecar failed for job ${jobId}: ${sidecarErr?.message} — trying Claude fallback`);
-        await this.firebase.createLog({
-          account_id: job.account_id,
-          store_id: job.store_id,
-          job_id: jobId,
-          nivel: 'warning',
-          mensagem: `Sidecar falhou (${sidecarErr?.message}), a usar Claude como fallback`,
-        });
-        resultado = await this.claude.extract(job.url, page, { proxyUrls });
-      }
+      const resultado = await extractor.extract(job.url, page, { proxyUrls });
 
       const duracao = Date.now() - startedAt;
       await this.firebase.completeJob(jobId, resultado, duracao);
