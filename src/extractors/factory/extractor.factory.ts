@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Extractor } from '../base/extractor.interface';
 import { SidecarExtractor } from '../sidecar/sidecar.extractor';
-import { ClaudeExtractor } from '../claude/claude.extractor';
 import { MarketplaceSource } from '../../common/types';
 
 @Injectable()
@@ -9,9 +8,8 @@ export class ExtractorFactory {
   private readonly logger = new Logger(ExtractorFactory.name);
   private readonly extractors: Extractor[];
 
-  constructor(private sidecar: SidecarExtractor, private claude: ClaudeExtractor) {
-    // Claude é o último fallback — aceita qualquer URL
-    this.extractors = [sidecar, claude];
+  constructor(private sidecar: SidecarExtractor) {
+    this.extractors = [sidecar];
   }
 
   getExtractor(url: string): Extractor {
