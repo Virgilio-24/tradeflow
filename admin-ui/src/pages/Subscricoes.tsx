@@ -8,7 +8,7 @@ import { Account, Plan } from '../types'
 import {
   RefreshCw, RotateCcw, CheckCircle, XCircle,
   AlertTriangle, Clock, TrendingUp, Users,
-  ChevronRight, CalendarDays, Trash2,
+  ChevronRight, CalendarDays, Trash2, Zap,
 } from 'lucide-react'
 
 type Filtro = 'todos' | 'active' | 'trial' | 'expiring' | 'suspended' | 'cancelled'
@@ -351,6 +351,16 @@ export function Subscricoes() {
                       {/* Acções */}
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2 justify-end">
+                          {/* Reset créditos */}
+                          <button
+                            title="Reset créditos usados a 0"
+                            onClick={async () => { await api.resetCredits(acc.id); load() }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+                          >
+                            <Zap size={11} />
+                            Reset
+                          </button>
+
                           {/* Renovar */}
                           <button
                             title="Renovar +1 mês"

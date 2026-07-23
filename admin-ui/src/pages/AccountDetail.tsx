@@ -7,7 +7,7 @@ import { api } from '../api'
 import { Account, Store, Plan } from '../types'
 import {
   ArrowLeft, Plus, RefreshCw, Copy, Check,
-  Globe, ToggleLeft, ToggleRight, Key,
+  Globe, ToggleLeft, ToggleRight, Key, RotateCcw, Zap,
 } from 'lucide-react'
 
 function fmtDate(ts?: { seconds?: number; _seconds?: number } | null) {
@@ -42,6 +42,8 @@ export function AccountDetail() {
   const [storeForm, setStoreForm] = useState({ site_url: '', site_nome: '' })
   const [submitting, setSubmitting] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [showRenew, setShowRenew] = useState(false)
+  const [showResetCredits, setShowResetCredits] = useState(false)
 
   async function load() {
     if (!id) return
@@ -62,6 +64,38 @@ export function AccountDetail() {
   }
 
   useEffect(() => { load() }, [id])
+
+  async function handleRenew() {
+    if (!id) return
+    setSubmitting(true)
+    setFeedback('')
+    try {
+      await api.renewAccount(id)
+      setFeedback('Subscrição renovada +1 mês!')
+      await load()
+      setTimeout(() => setShowRenew(false), 1500)
+    } catch (err: unknown) {
+      setFeedback(`Erro: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleResetCredits() {
+    if (!id) return
+    setSubmitting(true)
+    setFeedback('')
+    try {
+      await api.resetCredits(id)
+      setFeedback('Créditos usados reiniciados a 0!')
+      await load()
+      setTimeout(() => setShowResetCredits(false), 1500)
+    } catch (err: unknown) {
+      setFeedback(`Erro: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   async function handleAddStore(e: React.FormEvent) {
     e.preventDefault()
@@ -108,13 +142,29 @@ export function AccountDetail() {
     <Layout
       title={account.nome}
       actions={
-        <button
-          onClick={() => navigate('/accounts')}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50"
-        >
-          <ArrowLeft size={14} />
-          Voltar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setFeedback(''); setShowResetCredits(true) }}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-orange-600 bg-orange-50 border border-orange-100 rounded-xl hover:bg-orange-100 transition-colors"
+          >
+            <Zap size={14} />
+            Reset créditos
+          </button>
+          <button
+            onClick={() => { setFeedback(''); setShowRenew(true) }}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-green-700 bg-green-50 border border-green-100 rounded-xl hover:bg-green-100 transition-colors"
+          >
+            <RotateCcw size={14} />
+            Renovar
+          </button>
+          <button
+            onClick={() => navigate('/accounts')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50"
+          >
+            <ArrowLeft size={14} />
+            Voltar
+          </button>
+        </div>
       }
     >
       {/* Stat cards */}
@@ -253,6 +303,52 @@ export function AccountDetail() {
           </table>
         )}
       </div>
+
+      {/* Modal — Renovar */}
+      {showRenew && (
+        <Modal title="Renovar subscrição" onClose={() => setShowRenew(false)} size="sm">
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 space-y-1">
+              <p><span className="font-medium">Conta:</span> {account.nome}</p>
+              <p><span className="font-medium">Renovação actual:</span> {fmtDate(account.renovacao_em)}</p>
+              <p className="text-gray-500 text-xs pt-1">A nova data será +1 mês. O estado passará a <strong>Activo</strong>.</p>
+            </div>
+            {feedback && (
+              <div className={`p-3 rounded-xl text-sm ${feedback.startsWith('Erro') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{feedback}</div>
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => setShowRenew(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50">Cancelar</button>
+              <button onClick={handleRenew} disabled={submitting} className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-500 disabled:opacity-60 flex items-center justify-center gap-2">
+                {submitting ? <RefreshCw size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+                Confirmar renovação
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal — Reset créditos */}
+      {showResetCredits && (
+        <Modal title="Reset créditos usados" onClose={() => setShowResetCredits(false)} size="sm">
+          <div className="space-y-4">
+            <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-sm text-orange-800 space-y-1">
+              <p className="font-semibold">Isto vai repor os créditos usados a 0.</p>
+              <p>Conta: <strong>{account.nome}</strong></p>
+              <p>Créditos usados actuais: <strong>{account.creditos_usados}</strong> / {account.creditos_limite}</p>
+            </div>
+            {feedback && (
+              <div className={`p-3 rounded-xl text-sm ${feedback.startsWith('Erro') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{feedback}</div>
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => setShowResetCredits(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50">Cancelar</button>
+              <button onClick={handleResetCredits} disabled={submitting} className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 text-white hover:bg-orange-400 disabled:opacity-60 flex items-center justify-center gap-2">
+                {submitting ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
+                Confirmar reset
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Add Store Modal */}
       {showAddStore && (
