@@ -158,6 +158,18 @@ export class AdminService {
     return { ok: true, novo_limite: account.creditos_limite + amount };
   }
 
+  async deductCredits(id: string, amount: number) {
+    const account = await this.firebase.getAccount(id);
+    if (!account) throw new NotFoundException('Account not found');
+    await this.firebase.decrementCredits(id, amount);
+    await this.firebase.createLog({
+      account_id: id,
+      nivel: 'info',
+      mensagem: `Temu import — deducted ${amount} credit(s)`,
+    });
+    return { ok: true };
+  }
+
   async listStores(accountId: string) {
     return this.firebase.listStoresByAccount(accountId);
   }
