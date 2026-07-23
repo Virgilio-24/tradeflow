@@ -121,6 +121,16 @@ export class AdminController {
     return this.admin.addCredits(id, body.amount);
   }
 
+  @Put('accounts/:id/credits/used')
+  async setCreditsUsed(
+    @Headers('x-admin-token') token: string,
+    @Param('id') id: string,
+    @Body() body: { value: number },
+  ) {
+    this.validateAdmin(token);
+    return this.admin.setCreditsUsed(id, body.value);
+  }
+
   @Put('accounts/:id/credits/deduct')
   async deductCredits(
     @Headers('x-admin-token') token: string,

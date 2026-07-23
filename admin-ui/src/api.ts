@@ -43,6 +43,8 @@ export const api = {
     request(`/admin/accounts/${id}/plan`, { method: 'PUT', body: JSON.stringify({ plano_id }) }),
   addCredits: (id: string, amount: number) =>
     request(`/admin/accounts/${id}/credits/add`, { method: 'PUT', body: JSON.stringify({ amount }) }),
+  setCreditsUsed: (id: string, value: number) =>
+    request(`/admin/accounts/${id}/credits/used`, { method: 'PUT', body: JSON.stringify({ value }) }),
   renewAccount: (id: string) =>
     request(`/admin/accounts/${id}/renew`, { method: 'PUT', body: JSON.stringify({}) }),
   setBillingStatus: (id: string, status: string, motivo?: string) =>

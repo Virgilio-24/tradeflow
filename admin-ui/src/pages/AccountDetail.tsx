@@ -44,6 +44,7 @@ export function AccountDetail() {
   const [feedback, setFeedback] = useState('')
   const [showRenew, setShowRenew] = useState(false)
   const [showResetCredits, setShowResetCredits] = useState(false)
+  const [creditsUsedInput, setCreditsUsedInput] = useState('')
 
   async function load() {
     if (!id) return
@@ -81,13 +82,19 @@ export function AccountDetail() {
     }
   }
 
-  async function handleResetCredits() {
+  async function handleResetCredits(toZero: boolean) {
     if (!id) return
     setSubmitting(true)
     setFeedback('')
     try {
-      await api.resetCredits(id)
-      setFeedback('Créditos usados reiniciados a 0!')
+      if (toZero) {
+        await api.resetCredits(id)
+      } else {
+        const val = parseInt(creditsUsedInput, 10)
+        if (isNaN(val) || val < 0) { setFeedback('Valor inválido'); setSubmitting(false); return }
+        await api.setCreditsUsed(id, val)
+      }
+      setFeedback('Créditos actualizados!')
       await load()
       setTimeout(() => setShowResetCredits(false), 1500)
     } catch (err: unknown) {
@@ -327,23 +334,38 @@ export function AccountDetail() {
         </Modal>
       )}
 
-      {/* Modal — Reset créditos */}
+      {/* Modal — Ajustar créditos usados */}
       {showResetCredits && (
-        <Modal title="Reset créditos usados" onClose={() => setShowResetCredits(false)} size="sm">
+        <Modal title="Ajustar créditos usados" onClose={() => setShowResetCredits(false)} size="sm">
           <div className="space-y-4">
-            <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-sm text-orange-800 space-y-1">
-              <p className="font-semibold">Isto vai repor os créditos usados a 0.</p>
+            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700">
               <p>Conta: <strong>{account.nome}</strong></p>
-              <p>Créditos usados actuais: <strong>{account.creditos_usados}</strong> / {account.creditos_limite}</p>
+              <p className="mt-1">Créditos usados actuais: <strong className={account.creditos_usados >= account.creditos_limite ? 'text-red-600' : ''}>{account.creditos_usados}</strong> / {account.creditos_limite}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Definir créditos usados para</label>
+              <input
+                type="number"
+                min={0}
+                max={account.creditos_limite}
+                value={creditsUsedInput}
+                onChange={e => setCreditsUsedInput(e.target.value)}
+                placeholder={`0 – ${account.creditos_limite}`}
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
+              <p className="text-xs text-gray-400 mt-1">O valor será limitado entre 0 e {account.creditos_limite}.</p>
             </div>
             {feedback && (
-              <div className={`p-3 rounded-xl text-sm ${feedback.startsWith('Erro') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{feedback}</div>
+              <div className={`p-3 rounded-xl text-sm ${feedback.startsWith('Erro') || feedback === 'Valor inválido' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{feedback}</div>
             )}
             <div className="flex gap-2">
               <button onClick={() => setShowResetCredits(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50">Cancelar</button>
-              <button onClick={handleResetCredits} disabled={submitting} className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 text-white hover:bg-orange-400 disabled:opacity-60 flex items-center justify-center gap-2">
+              <button onClick={() => handleResetCredits(true)} disabled={submitting} className="py-2.5 px-4 rounded-xl text-sm font-medium border border-orange-200 text-orange-700 hover:bg-orange-50 disabled:opacity-60">
+                Reset a 0
+              </button>
+              <button onClick={() => handleResetCredits(false)} disabled={submitting || creditsUsedInput === ''} className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-60 flex items-center justify-center gap-2">
                 {submitting ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
-                Confirmar reset
+                Aplicar
               </button>
             </div>
           </div>

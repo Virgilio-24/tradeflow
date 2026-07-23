@@ -170,6 +170,19 @@ export class AdminService {
     return { ok: true };
   }
 
+  async setCreditsUsed(id: string, value: number) {
+    const account = await this.firebase.getAccount(id);
+    if (!account) throw new NotFoundException('Account not found');
+    const clamped = Math.max(0, Math.min(value, account.creditos_limite));
+    await this.firebase.updateAccount(id, { creditos_usados: clamped });
+    await this.firebase.createLog({
+      account_id: id,
+      nivel: 'info',
+      mensagem: `Admin set creditos_usados to ${clamped} (was ${account.creditos_usados})`,
+    });
+    return { ok: true, creditos_usados: clamped };
+  }
+
   async listStores(accountId: string) {
     return this.firebase.listStoresByAccount(accountId);
   }
