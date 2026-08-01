@@ -15,17 +15,20 @@ export class StripeController {
     private firebase: FirebaseService,
   ) {}
 
-  // Cria sessão de checkout — chamado pelo frontend da landing page
+  // Cria sessão de checkout — chamado pelo realstiles admin
   @Post('checkout')
   async checkout(@Body() body: {
     price_id?: string;
     plano_id?: string;
-    account_id: string;
+    account_id?: string;
+    email?: string;
+    nome?: string;
+    store_url?: string;
+    callback_url?: string;
     success_url?: string;
     cancel_url?: string;
   }) {
-    const { account_id, success_url, cancel_url } = body;
-    if (!account_id) throw new BadRequestException('account_id obrigatório');
+    const { success_url, cancel_url, callback_url, store_url } = body;
 
     let price_id = body.price_id;
     if (!price_id && body.plano_id) {
@@ -33,10 +36,27 @@ export class StripeController {
     }
     if (!price_id) throw new BadRequestException('price_id ou plano_id obrigatório');
 
-    const account = await this.firebase.getAccount(account_id);
-    if (!account) throw new BadRequestException('Conta não encontrada');
+    let account_id = body.account_id;
+    let email = body.email;
 
-    const url = await this.stripeService.createCheckoutSession(price_id, account_id, account.email, success_url, cancel_url);
+    // Se não veio account_id, criar conta agora com plano trial (pagamento activa depois via webhook)
+    if (!account_id) {
+      if (!body.email || !body.nome || !body.plano_id) {
+        throw new BadRequestException('account_id ou (email + nome + plano_id) obrigatórios');
+      }
+      account_id = await this.stripeService.createPendingAccount(body.email, body.nome);
+      email = body.email;
+    } else {
+      const account = await this.firebase.getAccount(account_id);
+      if (!account) throw new BadRequestException('Conta não encontrada');
+      email = account.email;
+    }
+
+    const url = await this.stripeService.createCheckoutSession(
+      price_id, account_id, email!,
+      success_url, cancel_url,
+      { store_url, callback_url, plano_id: body.plano_id },
+    );
     return { url };
   }
 

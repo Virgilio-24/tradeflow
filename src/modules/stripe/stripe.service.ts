@@ -43,21 +43,41 @@ export class StripeService {
       },
       [this.config.get('STRIPE_PRICE_PACK_S')!]: {
         creditos: 400, whatsapp: false, whatsapp_numeros_max: 0,
-        tipo: 'avulso',
+        tipo: 'avulso', plano_id: 'pack_s',
       },
       [this.config.get('STRIPE_PRICE_PACK_M')!]: {
         creditos: 1200, whatsapp: false, whatsapp_numeros_max: 0,
-        tipo: 'avulso',
+        tipo: 'avulso', plano_id: 'pack_m',
       },
       [this.config.get('STRIPE_PRICE_PACK_L')!]: {
         creditos: 3500, whatsapp: false, whatsapp_numeros_max: 0,
-        tipo: 'avulso',
+        tipo: 'avulso', plano_id: 'pack_l',
       },
       [this.config.get('STRIPE_PRICE_WHATSAPP')!]: {
         creditos: 0, whatsapp: true, whatsapp_numeros_max: -1,
-        tipo: 'wa',
+        tipo: 'wa', plano_id: 'whatsapp',
       },
     };
+  }
+
+  async createPendingAccount(email: string, nome: string): Promise<string> {
+    const renovacao = admin.firestore.Timestamp.fromDate(
+      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    );
+    return this.firebase.createAccount({
+      email,
+      nome,
+      plano_id: 'trial' as any,
+      billing_status: 'trial',
+      creditos_usados: 0,
+      creditos_limite: 20,
+      creditos_extra: 0,
+      whatsapp_ativo: false,
+      whatsapp_numeros_max: 1,
+      whatsapp_numeros_registados: [],
+      renovacao_em: renovacao as any,
+      criado_em: admin.firestore.Timestamp.now() as any,
+    });
   }
 
   // Cria uma sessão de checkout no Stripe
@@ -72,19 +92,22 @@ export class StripeService {
     email: string,
     successUrl?: string,
     cancelUrl?: string,
+    extra?: { store_url?: string; callback_url?: string; plano_id?: string },
   ): Promise<string> {
     const cfg = this.priceMap[priceId];
     if (!cfg) throw new BadRequestException('Plano inválido');
 
     const mode = cfg.tipo === 'avulso' ? 'payment' : 'subscription';
+    const metadata: Record<string, string> = { account_id: accountId, price_id: priceId };
+    if (extra?.store_url) metadata.store_url = extra.store_url;
+    if (extra?.callback_url) metadata.callback_url = extra.callback_url;
+    if (extra?.plano_id) metadata.plano_id = extra.plano_id;
 
     const session = await this.stripe.checkout.sessions.create({
       mode,
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email,
-      metadata: { account_id: accountId, price_id: priceId },
-      // Para subscrições mensais: propagar account_id para o objecto Subscription
-      // para que invoice.paid consiga identificar a conta
+      metadata,
       ...(mode === 'subscription' ? {
         subscription_data: { metadata: { account_id: accountId } },
       } : {}),
@@ -114,6 +137,26 @@ export class StripeService {
       await this.onSubscriptionUpdated(event.data.object as Stripe.Subscription);
     } else if (event.type === 'customer.subscription.deleted') {
       await this.onSubscriptionCancelled(event.data.object as Stripe.Subscription);
+    }
+  }
+
+  private async notifyCallback(session: Stripe.Checkout.Session, accountId: string): Promise<void> {
+    const callbackUrl = session.metadata?.callback_url;
+    if (!callbackUrl) return;
+    const licenseKey = (await this.firebase.getAccount(accountId))?.license_key ?? '';
+    try {
+      await fetch(callbackUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          account_id: accountId,
+          license_key: licenseKey,
+          plano_id: session.metadata?.plano_id,
+          store_url: session.metadata?.store_url,
+        }),
+      });
+    } catch (err: any) {
+      this.logger.error(`Callback failed: ${err.message}`);
     }
   }
 
@@ -166,6 +209,8 @@ export class StripeService {
       const acc = await this.firebase.getAccount(accountId);
       if (acc) this.mail.enviarConfirmacaoPlano({ nome: acc.nome, email: acc.email, plano: cfg.plano_id!, creditos: cfg.creditos });
     }
+
+    await this.notifyCallback(session, accountId);
   }
 
   // Renovação mensal de subscrição
