@@ -61,12 +61,17 @@ export class StripeService {
   }
 
   async createPendingAccount(email: string, nome: string): Promise<string> {
+    const licenseKey = 'tf_' + Array.from(
+      { length: 32 },
+      () => Math.random().toString(36)[2],
+    ).join('');
     const renovacao = admin.firestore.Timestamp.fromDate(
       new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     );
     return this.firebase.createAccount({
       email,
       nome,
+      license_key: licenseKey,
       plano_id: 'trial' as any,
       billing_status: 'trial',
       creditos_usados: 0,
