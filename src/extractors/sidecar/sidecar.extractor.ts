@@ -69,7 +69,9 @@ export class SidecarExtractor implements Extractor {
 
   private async callSidecar(sidecarUrl: string, url: string, proxyUrls?: string[], cookieString?: string): Promise<any> {
     const encoded = encodeURIComponent(url);
+    const fonte = this.sourceForUrl(url);
     let endpoint = `${sidecarUrl}/api/product/auto?url=${encoded}`;
+    if (fonte === 'amazon') endpoint += '&lang=pt';
     if (proxyUrls && proxyUrls.length > 0) {
       endpoint += `&proxies=${encodeURIComponent(proxyUrls.join(','))}`;
     }
@@ -139,6 +141,9 @@ export class SidecarExtractor implements Extractor {
 
     if (precoOriginal > preco) result.preco_original = precoOriginal;
     if (data.description) result.descricao = data.description;
+    if (data.colorImagesMap && typeof data.colorImagesMap === 'object') {
+      result.colorImagesMap = data.colorImagesMap;
+    }
 
     return result;
   }

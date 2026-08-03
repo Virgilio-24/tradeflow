@@ -119,4 +119,5 @@ export interface ProductData {
   categoria?: string;
   fonte_url: string;
   fonte_site: MarketplaceSource;
+  colorImagesMap?: Record<string, string[]>;
 }
