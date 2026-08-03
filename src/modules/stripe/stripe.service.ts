@@ -224,6 +224,16 @@ export class StripeService {
         ...(stripeCustomerId ? { stripe_customer_id: stripeCustomerId } : {}),
         ...(stripeSubscriptionId ? { stripe_subscription_id: stripeSubscriptionId } : {}),
       });
+      // Garante que a subscription tem account_id na metadata para que invoice.paid funcione em renovações
+      if (stripeSubscriptionId) {
+        try {
+          await this.stripe.subscriptions.update(stripeSubscriptionId, {
+            metadata: { account_id: accountId },
+          });
+        } catch (err: any) {
+          this.logger.error(`Falha ao actualizar subscription metadata: ${err.message}`);
+        }
+      }
       this.logger.log(`Plan activated on checkout — account: ${accountId}, plano: ${cfg.plano_id}`);
       const acc = await this.firebase.getAccount(accountId);
       if (acc) this.mail.enviarConfirmacaoPlano({ nome: acc.nome, email: acc.email, plano: cfg.plano_id!, creditos: cfg.creditos });
