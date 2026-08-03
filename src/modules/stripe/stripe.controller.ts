@@ -36,26 +36,26 @@ export class StripeController {
     }
     if (!price_id) throw new BadRequestException('price_id ou plano_id obrigatório');
 
-    let account_id = body.account_id;
+    let account_id = body.account_id ?? null;
     let email = body.email;
 
-    // Se não veio account_id, criar conta agora com plano trial (pagamento activa depois via webhook)
-    if (!account_id) {
-      if (!body.email || !body.nome || !body.plano_id) {
-        throw new BadRequestException('account_id ou (email + nome + plano_id) obrigatórios');
-      }
-      account_id = await this.stripeService.createPendingAccount(body.email, body.nome);
-      email = body.email;
-    } else {
+    if (account_id) {
+      // Upgrade de conta existente
       const account = await this.firebase.getAccount(account_id);
       if (!account) throw new BadRequestException('Conta não encontrada');
       email = account.email;
+    } else {
+      // Nova subscrição — conta só é criada pelo webhook após pagamento confirmado
+      if (!body.email || !body.nome || !body.plano_id) {
+        throw new BadRequestException('account_id ou (email + nome + plano_id) obrigatórios');
+      }
+      email = body.email;
     }
 
     const url = await this.stripeService.createCheckoutSession(
       price_id, account_id, email!,
       success_url, cancel_url,
-      { store_url, callback_url, plano_id: body.plano_id },
+      { store_url, callback_url, plano_id: body.plano_id, nome: body.nome },
     );
     return { url };
   }

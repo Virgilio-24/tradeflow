@@ -93,17 +93,19 @@ export class StripeService {
 
   async createCheckoutSession(
     priceId: string,
-    accountId: string,
+    accountId: string | null,
     email: string,
     successUrl?: string,
     cancelUrl?: string,
-    extra?: { store_url?: string; callback_url?: string; plano_id?: string },
+    extra?: { store_url?: string; callback_url?: string; plano_id?: string; nome?: string },
   ): Promise<string> {
     const cfg = this.priceMap[priceId];
     if (!cfg) throw new BadRequestException('Plano inválido');
 
     const mode = cfg.tipo === 'avulso' ? 'payment' : 'subscription';
-    const metadata: Record<string, string> = { account_id: accountId, price_id: priceId };
+    const metadata: Record<string, string> = { price_id: priceId };
+    if (accountId) metadata.account_id = accountId;
+    if (extra?.nome) metadata.nome = extra.nome;
     if (extra?.store_url) metadata.store_url = extra.store_url;
     if (extra?.callback_url) metadata.callback_url = extra.callback_url;
     if (extra?.plano_id) metadata.plano_id = extra.plano_id;
@@ -113,7 +115,7 @@ export class StripeService {
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email,
       metadata,
-      ...(mode === 'subscription' ? {
+      ...(mode === 'subscription' && accountId ? {
         subscription_data: { metadata: { account_id: accountId } },
       } : {}),
       success_url: successUrl ?? `${this.config.get('APP_URL')}/registar?sucesso=1`,
@@ -167,9 +169,21 @@ export class StripeService {
 
   // Pagamento único (packs avulso) ou primeira renovação de subscrição
   private async onCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
-    const accountId = session.metadata?.account_id;
+    let accountId = session.metadata?.account_id;
     const priceId = session.metadata?.price_id;
-    if (!accountId || !priceId) return;
+    if (!priceId) return;
+
+    // Nova subscrição sem conta pré-criada — criar agora após pagamento confirmado
+    if (!accountId) {
+      const email = session.customer_email ?? session.metadata?.email ?? '';
+      const nome = session.metadata?.nome ?? email;
+      if (!email) {
+        this.logger.error('checkout.session.completed sem account_id nem email — ignorado');
+        return;
+      }
+      accountId = await this.createPendingAccount(email, nome);
+      this.logger.log(`Conta criada após pagamento — account: ${accountId}`);
+    }
 
     const cfg = this.priceMap[priceId];
     if (!cfg) {
