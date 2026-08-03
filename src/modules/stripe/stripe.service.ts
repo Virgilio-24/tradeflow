@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe = require('stripe');
 import * as admin from 'firebase-admin';
@@ -16,7 +16,7 @@ interface PriceConfig {
 }
 
 @Injectable()
-export class StripeService {
+export class StripeService implements OnModuleInit {
   private readonly logger = new Logger(StripeService.name);
   private stripe: Stripe;
   private priceMap: Record<string, PriceConfig>;
@@ -60,7 +60,25 @@ export class StripeService {
     };
   }
 
+  async onModuleInit() {
+    const plans = await this.firebase.listPlans();
+    for (const plan of plans) {
+      if (plan.id === 'trial') continue;
+      const priceId = this.getPriceIdForPlan(plan.id);
+      if (!priceId) {
+        this.logger.warn(`Plano "${plan.id}" existe no Firestore mas não tem Price ID configurado no priceMap`);
+      }
+    }
+  }
+
   async createPendingAccount(email: string, nome: string): Promise<string> {
+    // Se já existe conta com este email, reutiliza-a (evita duplicados quando trial → pago)
+    const existing = await this.firebase.getAccountByEmail(email);
+    if (existing) {
+      this.logger.log(`createPendingAccount: reutilizando conta existente ${existing.id} para ${email}`);
+      return existing.id;
+    }
+
     const licenseKey = 'tf_' + Array.from(
       { length: 32 },
       () => Math.random().toString(36)[2],
@@ -140,6 +158,8 @@ export class StripeService {
       await this.onCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
     } else if (event.type === 'invoice.paid') {
       await this.onInvoicePaid(event.data.object as Stripe.Invoice);
+    } else if (event.type === 'invoice.payment_failed') {
+      await this.onInvoicePaymentFailed(event.data.object as Stripe.Invoice);
     } else if (event.type === 'customer.subscription.updated') {
       await this.onSubscriptionUpdated(event.data.object as Stripe.Subscription);
     } else if (event.type === 'customer.subscription.deleted') {
@@ -151,20 +171,45 @@ export class StripeService {
     const callbackUrl = session.metadata?.callback_url;
     if (!callbackUrl) return;
     const licenseKey = (await this.firebase.getAccount(accountId))?.license_key ?? '';
-    try {
-      await fetch(callbackUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          account_id: accountId,
-          license_key: licenseKey,
-          plano_id: session.metadata?.plano_id,
-          store_url: session.metadata?.store_url,
-        }),
-      });
-    } catch (err: any) {
-      this.logger.error(`Callback failed: ${err.message}`);
+    const payload = JSON.stringify({
+      account_id: accountId,
+      license_key: licenseKey,
+      plano_id: session.metadata?.plano_id,
+      store_url: session.metadata?.store_url,
+    });
+    const secret = this.config.get<string>('CALLBACK_SECRET');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (secret) headers['x-callback-secret'] = secret;
+
+    const delays = [0, 5000, 30000];
+    for (const delay of delays) {
+      if (delay > 0) await new Promise(r => setTimeout(r, delay));
+      try {
+        const res = await fetch(callbackUrl, { method: 'POST', headers, body: payload });
+        if (res.ok) return;
+        this.logger.warn(`Callback retornou ${res.status} — ${delay > 0 ? 'retry' : 'tentativa 1'}`);
+      } catch (err: any) {
+        this.logger.warn(`Callback falhou: ${err.message} — ${delay > 0 ? 'retry' : 'tentativa 1'}`);
+      }
     }
+    this.logger.error(`Callback falhou após 3 tentativas para ${callbackUrl}`);
+  }
+
+  private async onInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
+    const subscriptionId = (invoice as any).subscription as string | null;
+    if (!subscriptionId) return;
+
+    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+    const accountId = (subscription.metadata?.account_id as string | undefined)
+      ?? (await this.getAccountByCustomer(subscription.customer as string));
+    if (!accountId) return;
+
+    const account = await this.firebase.getAccount(accountId);
+    if (!account) return;
+
+    this.logger.warn(`Pagamento falhou — account: ${accountId}`);
+    await this.firebase.updateAccount(accountId, { billing_status: 'past_due' } as any);
+    this.mail.enviarPagamentoFalhou({ nome: account.nome, email: account.email });
   }
 
   // Pagamento único (packs avulso) ou primeira renovação de subscrição
@@ -293,6 +338,7 @@ export class StripeService {
     await this.firebase.updateAccount(accountId, {
       plano_id: cfg.plano_id as any,
       billing_status: 'active',
+      creditos_usados: 0,
       creditos_limite: cfg.creditos,
       whatsapp_ativo: cfg.whatsapp,
       whatsapp_numeros_max: cfg.whatsapp_numeros_max,

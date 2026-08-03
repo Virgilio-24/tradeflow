@@ -26,6 +26,12 @@ export class AdminController {
     return this.admin.listAccounts();
   }
 
+  @Get('accounts/:id')
+  async getAccount(@Headers('x-admin-token') token: string, @Param('id') id: string) {
+    this.validateAdmin(token);
+    return this.admin.getAccount(id);
+  }
+
   @Post('accounts')
   @HttpCode(201)
   async createAccount(

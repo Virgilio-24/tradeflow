@@ -73,6 +73,9 @@ export class CookiesController {
     const sidecarUrl = process.env.SIDECAR_URL;
     if (!sidecarUrl) return res.status(503).json({ error: 'SIDECAR_URL não configurado' });
     if (!body.url) return res.status(400).json({ error: 'url obrigatório' });
+    if (!licenseKey) return res.status(401).json({ error: 'x-license-key obrigatório' });
+    const account = await this.firebase.getAccountByLicenseKey(licenseKey);
+    if (!account) return res.status(401).json({ error: 'License key inválida' });
 
     let domain: string;
     try { domain = new URL(body.url).hostname; } catch { return res.status(400).json({ error: 'URL inválido' }); }
@@ -104,11 +107,15 @@ export class CookiesController {
   @Post('session/save')
   async sessionSave(
     @Body() body: { url: string },
+    @Headers('x-license-key') licenseKey: string,
     @Res() res: Response,
   ) {
     const sidecarUrl = process.env.SIDECAR_URL;
     if (!sidecarUrl) return res.status(503).json({ error: 'SIDECAR_URL não configurado' });
     if (!body.url) return res.status(400).json({ error: 'url obrigatório' });
+    if (!licenseKey) return res.status(401).json({ error: 'x-license-key obrigatório' });
+    const account = await this.firebase.getAccountByLicenseKey(licenseKey);
+    if (!account) return res.status(401).json({ error: 'License key inválida' });
 
     let domain: string;
     try { domain = new URL(body.url).hostname; } catch { return res.status(400).json({ error: 'URL inválido' }); }

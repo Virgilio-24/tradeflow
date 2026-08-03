@@ -1,8 +1,9 @@
 import {
   Controller, Post, Body, Headers, RawBodyRequest,
-  Req, BadRequestException, Logger,
+  Req, BadRequestException, Logger, UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { StripeService } from './stripe.service';
 import { FirebaseService } from '../../firebase/firebase.service';
 
@@ -13,11 +14,18 @@ export class StripeController {
   constructor(
     private stripeService: StripeService,
     private firebase: FirebaseService,
+    private config: ConfigService,
   ) {}
+
+  private validateAdmin(token: string) {
+    if (token !== this.config.get('ADMIN_SECRET')) {
+      throw new UnauthorizedException('Invalid admin token');
+    }
+  }
 
   // Cria sessão de checkout — chamado pelo realstiles admin
   @Post('checkout')
-  async checkout(@Body() body: {
+  async checkout(@Headers('x-admin-token') token: string, @Body() body: {
     price_id?: string;
     plano_id?: string;
     account_id?: string;
@@ -28,6 +36,7 @@ export class StripeController {
     success_url?: string;
     cancel_url?: string;
   }) {
+    this.validateAdmin(token);
     const { success_url, cancel_url, callback_url, store_url } = body;
 
     let price_id = body.price_id;
@@ -62,7 +71,8 @@ export class StripeController {
 
   // Cancela subscrição no fim do período actual
   @Post('cancel')
-  async cancel(@Body() body: { account_id: string }) {
+  async cancel(@Headers('x-admin-token') token: string, @Body() body: { account_id: string }) {
+    this.validateAdmin(token);
     const { account_id } = body;
     if (!account_id) throw new BadRequestException('account_id obrigatório');
     await this.stripeService.cancelSubscription(account_id);
@@ -71,7 +81,8 @@ export class StripeController {
 
   // Cria sessão do Customer Portal — permite gerir subscrição
   @Post('portal')
-  async portal(@Body() body: { account_id: string; return_url?: string }) {
+  async portal(@Headers('x-admin-token') token: string, @Body() body: { account_id: string; return_url?: string }) {
+    this.validateAdmin(token);
     const { account_id, return_url } = body;
     if (!account_id) throw new BadRequestException('account_id obrigatório');
     const url = await this.stripeService.createPortalSession(account_id, return_url ?? '');

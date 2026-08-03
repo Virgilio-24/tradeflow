@@ -42,6 +42,7 @@ export interface Store {
   site_url: string;
   activo: boolean;
   rate_limit: number;
+  callback_url?: string;
   criado_em: FirebaseFirestore.Timestamp;
 }
 

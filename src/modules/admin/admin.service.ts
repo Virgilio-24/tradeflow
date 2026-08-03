@@ -9,6 +9,13 @@ export class AdminService {
 
   // ── CONTAS ──
 
+  async getAccount(id: string) {
+    const account = await this.firebase.getAccount(id);
+    if (!account) throw new NotFoundException(`Account "${id}" not found`);
+    const stores = await this.firebase.listStoresByAccount(id);
+    return { ...account, stores_count: stores.length };
+  }
+
   async listAccounts() {
     const accounts = await this.firebase.listAccounts();
     return Promise.all(

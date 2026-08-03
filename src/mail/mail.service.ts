@@ -345,4 +345,31 @@ export class MailService {
       this.logger.error(`Falha ao enviar email: ${err.message}`);
     }
   }
+
+  async enviarPagamentoFalhou(dados: { nome: string; email: string }) {
+    if (!this.transporter) return;
+    try {
+      await this.transporter.sendMail({
+        from: `"TradeFlow" <${this.config.get('GMAIL_USER')}>`,
+        to: dados.email,
+        subject: 'Problema com o pagamento da tua subscrição TradeFlow',
+        html: `
+          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1e293b">
+            <div style="background:#ef4444;padding:24px 32px;border-radius:12px 12px 0 0">
+              <h1 style="color:#fff;margin:0;font-size:22px">⚡ TradeFlow</h1>
+            </div>
+            <div style="background:#f8fafc;padding:32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
+              <p style="font-size:15px;margin:0 0 16px">Olá <strong>${dados.nome}</strong>,</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 16px">Não foi possível processar o pagamento da tua subscrição TradeFlow. O Stripe irá tentar novamente nos próximos dias.</p>
+              <p style="font-size:14px;color:#475569;margin:0 0 24px">Se o problema persistir, atualiza o teu método de pagamento no portal de subscrição antes que o acesso seja suspenso.</p>
+              <p style="font-size:13px;color:#94a3b8;margin:0">Dúvidas? Responde a este email.<br>— Equipa TradeFlow</p>
+            </div>
+          </div>
+        `,
+      });
+      this.logger.log(`Aviso pagamento falhou enviado para ${dados.email}`);
+    } catch (err: any) {
+      this.logger.error(`Falha ao enviar aviso pagamento falhou: ${err.message}`);
+    }
+  }
 }
