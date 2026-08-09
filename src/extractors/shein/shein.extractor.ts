@@ -61,6 +61,11 @@ export class SheinExtractor implements Extractor {
       throw new Error('Sidecar returned empty product data');
     }
 
+    // Generic landing page detected (no product ID + no images = blocked/redirected)
+    if (!body.data.goodsId && (!body.data.images || body.data.images.length === 0)) {
+      throw new Error('Shein blocked — session cookies required');
+    }
+
     return body.data;
   }
 
@@ -145,25 +150,7 @@ export class SheinExtractor implements Extractor {
     }
 
     this.logger.warn(`Browser fallback: no BFF data for ${url.split('?')[0].split('/').pop()}`);
-    const meta = await page.evaluate(() => ({
-      title: document.querySelector('meta[property="og:title"]')?.getAttribute('content') ?? document.title ?? '',
-      description: document.querySelector('meta[property="og:description"]')?.getAttribute('content') ?? '',
-      image: document.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? '',
-    })).catch(() => ({ title: '', description: '', image: '' }));
-
-    return {
-      nome: meta.title,
-      descricao: meta.description,
-      preco: 0,
-      moeda: 'EUR',
-      imagens: meta.image ? [meta.image] : [],
-      variantes: [],
-      tamanhos: [],
-      cores: [],
-      tags: [],
-      fonte_url: url,
-      fonte_site: 'shein',
-    };
+    throw new Error('Shein blocked — session cookies required');
   }
 
   private findProductInJson(obj: any, depth = 0): any {
