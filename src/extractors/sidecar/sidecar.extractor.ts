@@ -115,10 +115,14 @@ export class SidecarExtractor implements Extractor {
       throw new Error('Sidecar returned empty product data');
     }
 
-    // Shein: generic landing page has a title but no product id → cookies needed
+    // Shein: generic/category page has no product images or no price → cookies needed
     const isShein = url.includes('shein.com') || url.includes('shein.pt');
-    if (isShein && !body.data.id) {
-      throw new Error('Shein blocked — session cookies required');
+    if (isShein) {
+      const hasImages = Array.isArray(body.data.images) && body.data.images.length > 0;
+      const hasPrice = parseFloat(String(body.data.price?.amount ?? '0')) > 0;
+      if (!hasImages || !hasPrice) {
+        throw new Error('Shein blocked — session cookies required');
+      }
     }
 
     return body.data;
