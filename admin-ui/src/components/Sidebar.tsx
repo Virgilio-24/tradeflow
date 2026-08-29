@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, CreditCard, Briefcase, ScrollText, LogOut, Zap, FlaskConical, CalendarCheck } from 'lucide-react'
+import { LayoutDashboard, Users, CreditCard, Briefcase, ScrollText, LogOut, FlaskConical, CalendarCheck } from 'lucide-react'
+import logo from '../assets/logo-tradeflow.png'
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,13 +25,8 @@ export function Sidebar() {
     <aside className="w-64 bg-gray-900 flex flex-col min-h-screen">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-6 py-5 border-b border-gray-800">
-        <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-          <Zap size={16} className="text-white" />
-        </div>
-        <div>
-          <p className="text-white font-semibold text-sm leading-tight">TradeFlow</p>
-          <p className="text-gray-500 text-xs">Admin Panel</p>
-        </div>
+        <img src={logo} alt="TradeFlow" className="h-7" />
+        <p className="text-gray-500 text-xs">Admin Panel</p>
       </div>
 
       {/* Nav */}

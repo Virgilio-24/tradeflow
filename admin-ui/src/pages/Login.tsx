@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Zap, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { api } from '../api'
+import logo from '../assets/logo-tradeflow.png'
 
 export function Login() {
   const navigate = useNavigate()
@@ -33,10 +34,8 @@ export function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/40 mb-4">
-            <Zap size={28} className="text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">TradeFlow Admin</h1>
+          <img src={logo} alt="TradeFlow" className="h-12 mb-4" />
+          <h1 className="text-2xl font-bold text-white">Admin</h1>
           <p className="text-gray-400 text-sm mt-1">Painel de gestão de subscrições</p>
         </div>
 
